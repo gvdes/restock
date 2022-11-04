@@ -262,7 +262,7 @@
   }
 
   const genQRKey = async () => {
-    let url = `http://192.168.12.183:2200/#/checkin/${head.value.id}?key=${wndQRCode.value.key}`;
+    let url = `http://192.168.10.15:2200/#/checkin/${head.value.id}?key=${wndQRCode.value.key}`;
     wndQRCode.value.state=true;
     nextTick(() => QRCode.toCanvas(document.getElementById('qrcode'), url) );
   }
