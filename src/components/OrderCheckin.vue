@@ -141,6 +141,9 @@
       <template v-slot:prepend>
         <q-icon name="fas fa-barcode" color="white" />
       </template>
+      <template v-slot:append>
+        <q-btn flat icon="fas fa-eraser" color="white" dense @click="finder=''" :disabled="!finder.length"/>
+      </template>
     </q-input>
     <q-btn color="white" text-color="indigo-10" label="Finalizar" icon="done" @click="wndNextState.state=true" v-if="counteds.length>0" no-caps/>
   </q-footer>
@@ -166,7 +169,7 @@
   const finder = ref("");
   const iptfinder = ref(null);
   const iptcounter = ref(null);
-  const viewcols = ref([]);
+  const viewcols = ref(["code", "request", "ipack", "uspply", "delivery", "checkout", "received", "reqinpzs"]);
   const table = ref({
     columns:[
       { name:'id', label:'ID', field:'id', align:"left", coldesc:"Identificador del producto (MySQL)" },
@@ -287,10 +290,5 @@
   }
 
   const rowClicked = (a,row,b) => enabledEditor.value ? openEditor(row):null;
-
-  onMounted(() => {
-    viewcols.value = ["code", "request", "uspply", "delivery", "received"];
-      // table.value.columns.map( c => c.name );
-  });
 
 </script>

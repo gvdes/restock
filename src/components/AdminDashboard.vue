@@ -1,5 +1,14 @@
 <template>
   <q-page padding class="bg-grey-2">
+    <div class="row q-mb-md items-start justify-around">
+      <q-btn stack no-caps class="q-py-md" v-for="stat in stats" :key="stat.key" @click="report(stat.key)" :color="stat.total==0?'teal-10':'pink-13'" :disabled="stat.total==0">
+        <div class="text-left">
+          <div class="text-h5">{{ stat.total }}</div>
+          <div class="text--2">{{ stat.name }}</div>
+        </div>
+      </q-btn>
+    </div>
+
     <q-table flat bordered row-key="id"
       :rows="ordersdb"
       :columns="table.columns"
@@ -27,6 +36,10 @@
     >
       <OrderViewer :head="orderViewer.head" @loaded="orderViewer.block=false" @loading="orderViewer.block=true"/>
     </q-dialog>
+
+    <q-dialog v-model="wndReport.state">
+      <TableReport :rows="wndReport.data" :name="wndReport.name" :type="wndReport.type" @cardResumeActived="reloadDashboard"/>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -34,15 +47,30 @@
   import { ref, computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import dayjs from 'dayjs';
+  import { useQuasar} from 'quasar';
   import RestockApi from 'src/api/RestockApi.js';
   import { useRestockStore } from 'stores/restock';
   import OrderViewer from 'src/components/OrderViewer.vue';
+  import TableReport from 'src/components/TableReport.vue'
 
   const $route = useRoute();
   const $router = useRouter();
   const $restockStore = useRestockStore();
-  const colorCellState = ['text-grey-5 text-bold','text-bold text-h6 text-red','text-indigo', '4', '5','text-bold text-pink-7','text-orange-8','8','text-primary','text-positive'];
+  const $q = useQuasar();
+  const colorCellState = [
+    'text-grey-5 text-bold',
+    'text-bold text-h6 text-red',
+    'text-indigo',
+    '4',
+    '5',
+    'text-bold text-pink-7',
+    'text-orange-8',
+    '8',
+    'text-primary',
+    'text-positive'
+  ];
 
+  const $emit = defineEmits(["reloadDashboard"]);
   const table = ref({
     columns:[
       { name:'id', label:'Folio', field:'id', align:"center", sortable:true },
@@ -58,6 +86,7 @@
       { name:'laststate', label:'Ultima actividad', field: row => dayjs(row.log.find(l => l.id==row.status.id).pivot.updated_at).format('YYYY-MM-DD hh:mm A'), align:"left" },
       { name:'from', label:'Sucursal', field: row => row.from.name.toUpperCase(), align:"left", sortable: true },
       { name:'notes', label:'Notas', field: row => row.notes, align:"left", classes: row => row.notes ? 'text-orange text-bold':'' },
+      { name:'tmodels', label:'Modelos', field: row => row.products_count, align:"center", sortable:true },
       { name:'invoice', label:'Salida', field: row => row.invoice??null, align:"center", classes:"text-bold"  },
       { name:'entry', label:'Entrada', field: row => row.invoice_received??null, align:"center", classes:"text-bold" },
     ],
@@ -68,6 +97,7 @@
       rowsPerPage:20
     }
   });
+  const wndReport = ref({ state:false, title:"", data:null, name:null, type:null });
 
   const orderViewer = ref({
     state:false,
@@ -77,9 +107,28 @@
 
   const ordersSize = computed(() => $restockStore.ordersSize);
   const ordersdb = computed(() => $restockStore.ordersdb);
+  const stats = computed(() => $restockStore.resume);
 
   const setOrderViewer = async (evt, row, idx) => {
     orderViewer.value.head=row;
     orderViewer.value.state=true;
   }
+
+  const report = async (key) => {
+    $q.loading.show({ message:"cargando..."+key });
+    const response = await RestockApi.report(key);
+    console.log(response.data);
+    wndReport.value.data = response.data.rows;
+    wndReport.value.name = response.data.name;
+    wndReport.value.type = key;
+    wndReport.value.state = true;
+    $q.loading.hide();
+  }
+
+  const reloadDashboard = () => {
+    wndReport.value.state=false;
+    wndReport.state=false;
+    $emit("reload");
+  }
+
 </script>

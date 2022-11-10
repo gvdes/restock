@@ -41,5 +41,13 @@ export default{
   checkinInit(data){
     let burl = `/restock/checkininit`;
     return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
+  report(data){
+    let burl = `/restock/report/${data}`;
+    return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
+  },
+  massiveAction(data){
+    let burl = `/restock/massaction`;
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
   }
 }

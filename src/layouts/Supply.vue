@@ -125,6 +125,9 @@
           <template v-slot:prepend>
             <q-icon name="fas fa-barcode" color="white" />
           </template>
+          <template v-slot:append>
+            <q-btn flat icon="fas fa-eraser" color="white" dense @click="finder=''" :disabled="!finder.length"/>
+          </template>
         </q-input>
       </q-footer>
       <q-footer v-if="ostate&&ostate.id!=3" bordered class="bg-orange-9 text-white">
@@ -147,7 +150,7 @@
   const $q = useQuasar();
 
   const prodschecks = ref([]);
-  const viewcols = ref(["code", "locs", "request", "uspply", "delivery"]);
+  const viewcols = ref(["code", "locs", "request", "uspply", "stocks", "delivery"]);
   const from = ref(null);
   const productsdb = ref([]);
   const finder = ref("");
@@ -164,6 +167,7 @@
       { name:'ipack', label:'PxC', field: row => typeof row.pivot.ipack=="number" ? row.pivot.ipack:row.pieces, align:"center", coldesc:"Unidades x Embalaje" },
       { name:'request', label:'Solicitud', field: row => row.pivot.amount, align:"center", coldesc:"Embalaje solicitado" },
       { name:'uspply', label:'Unidad', field: row => row.units.id==3? 'Cajas' :'Piezas', align:'left', coldesc:"Unidad de embalaje del producto"},
+      { name:'stocks', label:'Stock (pzs)', field: row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0), sortable:true, classes:row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0)<=0?'text-red text-bold':'text-bold text-primary', align:'center', coldesc:"Stock total en almacenes GENERALES (CEDIS+PAN)" },
       { name:'delivery', label:'Conteo', field: row => row.pivot.toDelivered, align:'center', coldesc:"Embalaje surtido"},
       {
         name:'reqinpzs',

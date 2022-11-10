@@ -42,7 +42,25 @@
 
         <q-card-actions class="col" align="right" v-if="cstate&&cstate.id>1">
           <q-btn color="pink-6" icon="qr_code" dense v-if="cstate&&cstate.id>6" @click="genQRKey"/>
-          <q-btn color="primary" icon="print" dense v-if="cstate&&cstate.id>2"/>
+          <q-btn color="indigo-10" icon="print" dense v-if="cstate&&cstate.id>2">
+            <q-menu class="bg-indigo-10" style="min-width:250px;">
+              <q-item dark>
+                <q-item-section>
+                  <q-item-label>Impresion</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-list dark>
+                <q-item clickable v-ripple>
+                  <q-item-section avatar> <q-icon name="print" /> </q-item-section>
+                  <q-item-section>
+                    <q-item-label>Salidas</q-item-label>
+                    <q-item-label caption class="text--2"><span class="text-indigo-11">ID:10</span> 192.168.10.15</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
           <q-btn color="positive" icon="start" dense label="Iniciar Surtido" @click="startSupply" v-if="cstate&&cstate.id==2" />
           <q-btn color="pink" icon="start" dense label="Emitir Salida" @click="wndGenInvoice.state=true" v-if="cstate&&cstate.id==6" />
         </q-card-actions>
@@ -184,6 +202,7 @@
       { name:'assocs', label:'Asociados', field: row => row.variants.length ? row.variants.map( p => p.barcode).join(', ') : null, align:"left", coldesc:"Codigos relacionados al codigo principal" },
       { name:'bcode', label:'Codigo de Barras', field:'barcode', align:"center", coldesc:"Codigo de barras principal" },
       { name:'locs', label:'Ubicacion', field: row => row.locations.length ? row.locations.map( l => l.path ).join(", ") :'--', align:"left", coldesc:"Ubicaciones en almacen general" },
+      { name:'stocks', label:'Stock (pzs)', field: row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0), sortable:true, classes:row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0)<=0?'text-red text-bold':'text-bold text-primary', align:'center', coldesc:"Stock total en almacenes GENERALES (CEDIS+PAN)" },
       { name:'ipack', label:'PxC', field: row => typeof row.pivot.ipack=="number" ? row.pivot.ipack:row.pieces, align:"center", coldesc:"Unidades x Embalaje" },
       { name:'request', label:'Solicitud', field: row => row.pivot.amount, align:"center", coldesc:"Embalaje solicitado" },
       { name:'uspply', label:'Unidad', field: row => row.units.id==3? 'Cajas' :'Piezas', align:'left', coldesc:"Unidad de embalaje del producto"},
@@ -197,7 +216,7 @@
         align:'center',
         coldesc:"Unidades totales en embalaje"
       },
-      { name:'checkout', label:'Checkout', 'field':row => row.pivot.checkout ? 'OK':'--', align:"center", classes:row => row.pivot.checkout ? 'text-positive':'', sortable:true, coldesc:"Revision del Administrador"},
+      { name:'checkout', label:'Checkout', 'field':row => row.pivot.checkout ? 'OK':'---', align:"center", classes:row => row.pivot.checkout ? 'text-positive text-bold':'text-red', sortable:true, coldesc:"Revision del Administrador"},
       { name:'received', label:'Entrada (conteo)', field:row => row.pivot.toReceived, align:"center", coldesc:"Embalaje recibido" },
       { name:'descr', label:'Descripcion', field:'description', align:"left" },
       { name:'section', label:'Seccion', field:'section', align:"left" },

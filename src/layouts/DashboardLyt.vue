@@ -20,7 +20,7 @@
     </q-header>
 
     <q-page-container>
-      <AdminDashboardComp />
+      <AdminDashboardComp @reload="init"/>
     </q-page-container>
   </q-layout>
 </template>
@@ -75,6 +75,8 @@
     console.log(req);
 
     $restockStore.fillOrders(req.orders);
+    $restockStore.fillResume(req.resume);
+    $restockStore.fillPrinters(req.printers);
 
     viewstore.value = optstores.value[0];
     console.log("%cMainLayout listo!!","font-size:2em;color:orange;");

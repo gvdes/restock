@@ -25,39 +25,81 @@
 
     <q-page-container>
       <q-page padding>
-        <q-table row-key="id" flat
-          :rows="basket"
-          :columns="table.columns"
-          :pagination="table.pagination"
-          :filter="table.filter"
-          :visible-columns="viewcols"
-          @row-click="rowClicked"
-        >
-          <template v-slot:top>
-            <div class="full-width row items-center justify-between">
-              <q-input dense v-model="table.filter" placeholder="Buscar" input-class="text-uppercase" color="pink-5">
-                <template v-slot:append>
-                  <q-icon name="search" />
-                </template>
-              </q-input>
-              <q-btn color="secondary" icon="fas fa-eye" no-caps>
-                <q-menu style="min-width: 200px">
-                  <q-list >
-                    <q-item tag="label" v-ripple v-for="(col,idx) in table.columns" :key="idx">
-                      <q-item-section>
-                        <q-item-label>{{col.label}}</q-item-label>
-                        <q-item-label caption>{{col.coldesc}}</q-item-label>
-                      </q-item-section>
-                      <q-item-section side top>
-                        <q-toggle color="pink-5" v-model="viewcols" :val="col.name"/>
-                      </q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
-            </div>
-          </template>
-        </q-table>
+        <div class="row">
+          <div class="col">
+            <div class="text-h6">Productos sin revisar</div>
+            <q-table row-key="id" flat
+              :rows="basket"
+              :columns="table.columns"
+              :pagination="table.pagination"
+              :filter="table.filter"
+              :visible-columns="viewcols"
+              @row-click="rowClicked"
+            >
+              <template v-slot:top>
+                <div class="full-width row items-center justify-between">
+                  <q-input dense v-model="table.filter" placeholder="Buscar" input-class="text-uppercase" color="pink-5">
+                    <template v-slot:append>
+                      <q-icon name="search" />
+                    </template>
+                  </q-input>
+                  <q-btn color="secondary" icon="fas fa-eye" no-caps>
+                    <q-menu style="min-width: 200px">
+                      <q-list >
+                        <q-item tag="label" v-ripple v-for="(col,idx) in table.columns" :key="idx">
+                          <q-item-section>
+                            <q-item-label>{{col.label}}</q-item-label>
+                            <q-item-label caption>{{col.coldesc}}</q-item-label>
+                          </q-item-section>
+                          <q-item-section side top>
+                            <q-toggle color="pink-5" v-model="viewcols" :val="col.name"/>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
+              </template>
+            </q-table>
+          </div>
+          <q-separator vertical />
+          <div class="col">
+            <div class="text-h6">Productos revisados</div>
+            <q-table row-key="id" flat
+              :rows="basketCheck"
+              :columns="table.columns"
+              :pagination="table.pagination"
+              :filter="table.filter"
+              :visible-columns="viewcols"
+              @row-click="rowClicked"
+            >
+              <template v-slot:top>
+                <div class="full-width row items-center justify-between">
+                  <q-input dense v-model="table.filter" placeholder="Buscar" input-class="text-uppercase" color="pink-5">
+                    <template v-slot:append>
+                      <q-icon name="search" />
+                    </template>
+                  </q-input>
+                  <q-btn color="secondary" icon="fas fa-eye" no-caps>
+                    <q-menu style="min-width: 200px">
+                      <q-list >
+                        <q-item tag="label" v-ripple v-for="(col,idx) in table.columns" :key="idx">
+                          <q-item-section>
+                            <q-item-label>{{col.label}}</q-item-label>
+                            <q-item-label caption>{{col.coldesc}}</q-item-label>
+                          </q-item-section>
+                          <q-item-section side top>
+                            <q-toggle color="pink-5" v-model="viewcols" :val="col.name"/>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-btn>
+                </div>
+              </template>
+            </q-table>
+          </div>
+        </div>
 
         <q-dialog v-model="wndCounter.state" position="bottom" @hide="iptfinder.focus()">
           <q-card v-if="wndCounter.item">
@@ -153,6 +195,9 @@
           <template v-slot:prepend>
             <q-icon name="fas fa-barcode" color="white" />
           </template>
+          <template v-slot:append>
+            <q-btn flat icon="fas fa-delete-left" color="white" @click="finder=''" :disabled="!finder.length"/>
+          </template>
         </q-input>
         <q-btn color="white" text-color="cyan-9" label="Terminar" icon="done" @click="wndNextState.state=true" v-if="counteds.length>0" no-caps/>
       </q-footer>
@@ -175,7 +220,7 @@
   const $router = useRouter();
   const $q = useQuasar();
 
-  const viewcols = ref([]);
+  const viewcols = ref(["code", "assocs", "ipack", "request", "uspply", "delivery", "reqinpzs", "checkout"]);
   const productsdb = ref([]);
   const finder = ref("");
   const iptcounter = ref(null);
@@ -229,7 +274,11 @@
   const wstock = computed(() => counteds.value.filter( p => p.pivot.toDelivered>0));
   const basket = computed(() => {
     let target = finder.value.toUpperCase().trim();
-    return target.length ? productsdb.value.filter( p => (p.code.match(target) || (p.barcode && p.barcode.match(target)) ) ) : productsdb.value;
+    return target.length ? uncounteds.value.filter( p => (p.code.match(target) || (p.barcode && p.barcode.match(target)) ) ) : uncounteds.value;
+  });
+  const basketCheck = computed(() => {
+    let target = finder.value.toUpperCase().trim();
+    return target.length ? counteds.value.filter( p => (p.code.match(target) || (p.barcode && p.barcode.match(target)) ) ) : counteds.value;
   });
 
   const init = async() => {
@@ -311,12 +360,6 @@
 
     $q.loading.hide();
   }
-
-  onMounted(() => {
-    viewcols.value = $q.screen.xs ?
-      ["code", "request", "uspply", "delivery"] :
-      table.value.columns.map( c => c.name );
-  });
 
   init();
 
