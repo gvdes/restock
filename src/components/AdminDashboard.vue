@@ -1,5 +1,12 @@
 <template>
   <q-page padding class="bg-grey-2">
+
+    <div v-if="orderserrors.length" class="bg-negative text-white q-pa-md q-mb-md">
+      <div class="text-warning text-bold">Los siguientes folios tienen errores que no permiten ser listados en la tabla.</div>
+      <div class="text-h6">{{orderserrors.map( o => o.id ).join('id')}}</div>
+      <div class="text--2">Errores comunes: Sin log, Sin fecha, Estatus desconocido</div>
+    </div>
+
     <div class="row q-mb-md items-start justify-around">
       <q-btn stack no-caps class="q-py-md" v-for="stat in stats" :key="stat.key" @click="report(stat.key)" :color="stat.total==0?'teal-10':'pink-13'" :disabled="stat.total==0">
         <div class="text-left">
@@ -10,7 +17,7 @@
     </div>
 
     <q-table flat bordered row-key="id"
-      :rows="ordersdb"
+      :rows="ordersok"
       :columns="table.columns"
       :filter="table.filter"
       :pagination="table.pagination"
@@ -44,7 +51,7 @@
 </template>
 
 <script setup>
-  import { ref, computed } from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import dayjs from 'dayjs';
   import { useQuasar} from 'quasar';
@@ -77,7 +84,7 @@
       {
         name:'state',
         label:'Estado',
-        field: row => (row.log.length==1 ? row.log[0].name:row.log[row.log.length-1].name),
+        field: row => (row.log.length==1 ? row.log[0].name : row.log[row.log.length-1].name),
         align:"left",
         sortable: true,
         sort: (a, b, rowA, rowB) => parseInt(rowA._status) - parseInt(rowB._status),
@@ -106,7 +113,8 @@
   });
 
   const ordersSize = computed(() => $restockStore.ordersSize);
-  const ordersdb = computed(() => $restockStore.ordersdb);
+  const ordersok = computed(() => $restockStore.ordersok);
+  const orderserrors = computed(() => $restockStore.orderserrors);
   const stats = computed(() => $restockStore.resume);
 
   const setOrderViewer = async (evt, row, idx) => {

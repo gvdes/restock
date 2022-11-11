@@ -44,7 +44,7 @@
           <q-btn color="pink-6" icon="qr_code" dense v-if="cstate&&cstate.id>6" @click="genQRKey"/>
           <q-btn color="indigo-10" icon="print" dense v-if="cstate&&cstate.id>2">
             <q-menu class="bg-grey-1 text-indigo-10" style="min-width:250px;">
-              <PrinterSelect @selected="printOrder"/>
+              <PrinterSelect @selected="printForSupply"/>
             </q-menu>
           </q-btn>
           <q-btn color="positive" icon="start" dense label="Iniciar Surtido" @click="startSupply" v-if="cstate&&cstate.id==2" />
@@ -288,15 +288,19 @@
     }else{ console.error(response); alert(`Error ${response.status}: ${response.data}`); }
   }
 
-  const printOrder = async data => {
+  const printForSupply = async data => {
     $q.loading.show({ message:"..." });
     console.log(data);
     const response = await RestockApi.printForSupply({ip:data.ip, port:data._port, order:head.value.id});
     console.log(response);
     if(response.status==200){
       let resp = response.data;
+      if(resp){
+        $q.notify({ message:"Impresion correcta", icon:"done", color:"positive", position:"top"});
+      }else{
+        $q.notify({ message:`Sin conexion a <b>${data.name} <small>(${data.ip})</small></b>`, icon:"fas fa-bug", color:"negative", position:"center", html:true, timeout:4000});
+      }
       $q.loading.hide();
-      $q.notify({ message:"Impresion correcta", icon:"done", color:"positive", position:"top"});
     }else{ console.error(response); alert(`Error ${response.status}: ${response.data}`); }
   }
 

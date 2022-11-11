@@ -8,6 +8,8 @@ export const useRestockStore = defineStore('restock', {
   }),
   getters: {
     ordersSize (state) { return state.ordersdb.length; },
+    ordersok (state) { return state.ordersdb.filter( o => o.log.length) },
+    orderserrors (state) { return state.ordersdb.filter( o => !o.log.length) }
   },
   actions: {
     fillOrders(data) { this.ordersdb = data; },
