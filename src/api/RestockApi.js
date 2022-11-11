@@ -30,10 +30,6 @@ export default{
     let burl = `/restock/${id}/newentry`;
     return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
   },
-  printKey(id){
-    let burl = `/restock/${id}/printkey`;
-    return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
-  },
   checkin(data){
     let burl = `/restock/checkin`;
     return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
@@ -49,5 +45,13 @@ export default{
   massiveAction(data){
     let burl = `/restock/massaction`;
     return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
-  }
+  },
+  printForSupply(data){
+    let burl = "/restock/print/forsupply";
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
+  printKey(data){
+    let burl = "/restock/print/key";
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
 }

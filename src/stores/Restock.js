@@ -12,10 +12,6 @@ export const useRestockStore = defineStore('restock', {
   actions: {
     fillOrders(data) { this.ordersdb = data; },
     fillResume(data) { this.resume = data; },
-    clearResumeCard(keyres) {
-      let idx = this.resume.findIndex( r => r.key == keyres);
-      this.resume[idx].total=0;
-    },
     fillPrinters(data){ this.printers = data; }
   }
 })

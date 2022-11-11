@@ -43,22 +43,8 @@
         <q-card-actions class="col" align="right" v-if="cstate&&cstate.id>1">
           <q-btn color="pink-6" icon="qr_code" dense v-if="cstate&&cstate.id>6" @click="genQRKey"/>
           <q-btn color="indigo-10" icon="print" dense v-if="cstate&&cstate.id>2">
-            <q-menu class="bg-indigo-10" style="min-width:250px;">
-              <q-item dark>
-                <q-item-section>
-                  <q-item-label>Impresion</q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-list dark>
-                <q-item clickable v-ripple>
-                  <q-item-section avatar> <q-icon name="print" /> </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Salidas</q-item-label>
-                    <q-item-label caption class="text--2"><span class="text-indigo-11">ID:10</span> 192.168.10.15</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
+            <q-menu class="bg-grey-1 text-indigo-10" style="min-width:250px;">
+              <PrinterSelect @selected="printOrder"/>
             </q-menu>
           </q-btn>
           <q-btn color="positive" icon="start" dense label="Iniciar Surtido" @click="startSupply" v-if="cstate&&cstate.id==2" />
@@ -146,7 +132,11 @@
       </q-card-section>
       <q-separator />
       <q-card-section align="center">
-        <q-btn color="primary" icon="print" @click="printKey"/>
+        <q-btn color="indigo-10" icon="print">
+          <q-menu>
+            <PrinterSelect @selected="printKey"/>
+          </q-menu>
+        </q-btn>
       </q-card-section>
     </q-card>
   </q-dialog>
@@ -175,6 +165,7 @@
   import dayjs from 'dayjs';
   import { useQuasar } from 'quasar';
   import QRCode from 'qrcode';
+  import PrinterSelect from 'src/components/PrinterSelect.vue';
 
   const $q = useQuasar();
   const $route = useRoute();
@@ -286,9 +277,27 @@
     nextTick(() => QRCode.toCanvas(document.getElementById('qrcode'), url) );
   }
 
-  const printKey = async () => {
-    const response = await RestockApi.printKey(head.value.id);
+  const printKey = async (data) => {
+    $q.loading.show({ message:"..." });
+    console.log(data);
+    const response = await RestockApi.printKey({ip:data.ip, port:data._port, order:head.value.id});
+    if(response.status==200){
+      let resp = response.data;
+      $q.loading.hide();
+      $q.notify({ message:"Impresion correcta", icon:"done", color:"positive", position:"top"});
+    }else{ console.error(response); alert(`Error ${response.status}: ${response.data}`); }
+  }
+
+  const printOrder = async data => {
+    $q.loading.show({ message:"..." });
+    console.log(data);
+    const response = await RestockApi.printForSupply({ip:data.ip, port:data._port, order:head.value.id});
     console.log(response);
+    if(response.status==200){
+      let resp = response.data;
+      $q.loading.hide();
+      $q.notify({ message:"Impresion correcta", icon:"done", color:"positive", position:"top"});
+    }else{ console.error(response); alert(`Error ${response.status}: ${response.data}`); }
   }
 
   onBeforeMount(() => viewcols.value = table.value.columns.map( c => c.name ) );

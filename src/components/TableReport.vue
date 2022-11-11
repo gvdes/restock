@@ -47,10 +47,10 @@
   const table = ref({
     columns:[
       { name:'ID', field:'ID', label:'ID', align:'center', },
-      { name:'code', field:'CODIGO', label:'Codigo', align:'center' },
+      { name:'code', field:'CODIGO', label:'Codigo', align:'center', sortable:true },
       { name:'desc', field:'DESCRIPCION', label:'Descripcion', align:"left" },
-      { name:'stockcedis', field:'CEDIS', label:'Stock (CEDIS)', align:"center" },
-      { name:'stockpan', field:'PANTACO', label:'Stock (PAN)', align:"center" },
+      { name:'stockcedis', field:'CEDIS', label:'Stock (CEDIS)', align:"center", sortable:true },
+      { name:'stockpan', field:'PANTACO', label:'Stock (PAN)', align:"center", sortable:true },
     ],
     filter:""
   });
