@@ -52,7 +52,7 @@
     { id:'C', label:'otra ...', disable:true},
   ]);
 
-  const dashboards = ["p2","P2","p3","P3"];
+  const dashboards = ["p2","P2","p3","P3","bol","BOL","sap","SAP"];
 
   const viewstore = ref(null);
   const viewdate = ref(null);
