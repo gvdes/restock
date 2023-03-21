@@ -9,7 +9,7 @@ import axios from 'axios'
 // for each client)
 const vizapi = axios.create({
   // baseURL: 'http://192.168.12.183/vizapi/public/L'
-  baseURL: 'http://192.168.10.15/vizapi/public/L'
+  baseURL: 'http://192.168.10.189/vizapi/public/L'
   // baseURL: 'http://192.168.1.68:80/arceus/public/api'
 });
 
