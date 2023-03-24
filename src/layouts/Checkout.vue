@@ -1,16 +1,16 @@
 <template>
   <q-layout view="hHh Lpr fFf"> <!-- Be sure to play with the Layout demo on docs -->
-    <q-header bordered class="bg-white text-dark">
+    <q-header bordered class="bg-cyan-10">
       <q-toolbar>
         <q-btn flat round dense icon="arrow_back" @click="$router.replace('/checkout');" />
         <q-toolbar-title>
           Pedido {{ $route.params.oid }}
         </q-toolbar-title>
-        <q-btn color="pink-5" icon="sync" @click="init" round dense flat />
+        <q-btn color="white" icon="sync" @click="init" round dense flat />
       </q-toolbar>
       <q-separator />
       <div class="q-px-md q-py-sm">
-        <div class="col text-dark row justify-between ">
+        <div class="col row justify-between ">
           <div>Productos: <b>{{productsdb.length}}</b></div>
           <div>Piezas: <b>{{totalpieces}}</b> </div>
         </div>
@@ -103,7 +103,7 @@
 
         <q-dialog v-model="wndCounter.state" position="bottom" @hide="iptfinder.focus()">
           <q-card v-if="wndCounter.item">
-            <q-card-section>
+            <q-card-section class="bg-grey-3">
               <div class="row justify-between">
                 <div class="text-left">
                   <div class="text--3">ID: {{ wndCounter.item.id }}</div>
@@ -123,7 +123,7 @@
             <q-card-section class="row justify-around items-center">
               <div  class="text-center">
                 <div class="text-h6">{{wndCounter.item.pieces}}</div>
-                <div class="text--2">Embalaje (org)</div>
+                <div class="text--2">PxC</div>
               </div>
               <div v-for="stock in wndCounter.item.stocks" :key="stock.id" class="text-center">
                 <div class="text-h6">{{stock.pivot.gen}}</div>
@@ -134,7 +134,7 @@
             <q-form @submit.prevent="setDeliveryProduct">
               <q-card-section>
                 <div class="row items-start justify-between">
-                  <div class="text-center col">
+                  <div class="text-center col text-primary">
                     <div>Solicitud</div>
                     <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.units.id==3? `Caja${wndCounter.item.pivot.amount!=1?'s':''}`: `Pieza${wndCounter.item.pivot.amount!=1?'s':''}` }}</div>
                   </div>
@@ -297,6 +297,7 @@
   const rowClicked = (a,row,b) => enabledEditor.value ? openEditor(row):null;
 
   const openEditor = (item) => {
+    console.log(item);
     wndCounter.value.item = item;
     wndCounter.value.form.count = typeof item.pivot.toDelivered=="number" ? item.pivot.toDelivered:0;
     wndCounter.value.form.ipack = typeof item.pivot.ipack=="number" ? item.pivot.ipack:item.pieces;

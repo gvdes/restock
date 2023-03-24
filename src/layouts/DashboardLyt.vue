@@ -1,10 +1,10 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header bordered class="transparent text-dark">
+    <q-header bordered class="bg-yellow text-dark">
       <q-toolbar class="row justify-between items-center">
         <div class="text-bold">Dashboard </div>
         <div class="row">
-          <q-btn color="pink-5" round unelevated flat icon="sync" @click="init" />
+          <q-btn color="dark" round unelevated flat icon="sync" @click="init" />
 
           <div class="col row">
             <q-select class="col"

@@ -260,19 +260,23 @@
     $q.loading.show({ message:"Generando, espera..." });
     wndGenInvoice.value.state = false;
     const response = await RestockApi.genInvoice(head.value.id);
-    console.log(response.data);
+    console.log(response);
 
     if(response.status==200){
       if(response.data.invoice){
+        $q.notify({
+          message:`Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
+          html:true, position:"center", icon:"done", timeout:5000, color:"positive"
+        });
         init();
-      }else{ alert("Error 500: Ocurrio un error inesperado :("); }
+      }
     }else{ alert(`Error ${response.status}: ${response.data}`); }
 
     $q.loading.hide();
   }
 
   const genQRKey = async () => {
-    let url = `http://192.168.10.15:2200/#/checkin/${head.value.id}?key=${wndQRCode.value.key}`;
+    let url = `http://192.168.12.189:2200/#/checkin/${head.value.id}?key=${wndQRCode.value.key}`;
     wndQRCode.value.state=true;
     nextTick(() => QRCode.toCanvas(document.getElementById('qrcode'), url) );
   }

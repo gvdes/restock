@@ -52,7 +52,7 @@
 
     let data = { oid, key };
 
-    console.log(data);
+    // console.log(data);
 
     const response = await RestockApi.checkin(data);
     console.log(response.data);

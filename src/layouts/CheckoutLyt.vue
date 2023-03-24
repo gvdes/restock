@@ -1,13 +1,13 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header bordered class="transparent text-dark">
+    <q-header bordered class="bg-cyan-10">
       <q-toolbar class="row justify-between items-center">
         <div class="text-bold">CheckOut </div>
         <div class="row">
-          <q-btn color="pink-5" round unelevated flat icon="sync" @click="init" />
+          <q-btn color="white" round unelevated flat icon="sync" @click="init" />
 
           <div class="col row">
-            <q-select class="col"
+            <q-select class="col" dark
               dense filled label="Vista"
               v-model="viewdate"
               :options="optranges"

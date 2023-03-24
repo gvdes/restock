@@ -1,11 +1,14 @@
 <template>
   <q-header bordered class="bg-white text-dark">
     <q-toolbar>
-      <!-- <q-btn flat round dense icon="arrow_back" @click="$router.replace('/supply');" /> -->
+      <q-btn color="pink-5" icon="sync" @click="reload" round dense flat />
       <q-toolbar-title>
         Pedido {{ $route.params.oid }} <span class="text--3" v-if="order">- {{order.from.alias}}</span>
       </q-toolbar-title>
-      <!-- <q-btn color="pink-5" icon="sync" @click="init" round dense flat /> -->
+      <div v-if="order.invoice_received" class="text-primary">
+        <div>Entrada:</div>
+        <div class="text-bold">{{ order.invoice_received }}</div>
+      </div>
     </q-toolbar>
     <q-separator />
     <div class="q-px-md q-py-sm">
@@ -56,7 +59,7 @@
 
   <q-dialog v-model="wndCounter.state" position="bottom" @hide="iptfinder.focus()">
     <q-card v-if="wndCounter.item">
-      <q-card-section>
+      <q-card-section class="bg-grey-3">
         <div class="row justify-between">
           <div class="text-left">
             <div class="text--3">ID: {{ wndCounter.item.id }}</div>
@@ -73,7 +76,7 @@
 
       <q-card-section>{{ wndCounter.item.description }}</q-card-section>
 
-      <q-card-section class="row justify-around items-center">
+      <q-card-section class="row justify-around items-center bg-grey-2">
         <div v-for="stock in wndCounter.item.stocks" :key="stock.id" class="text-center">
           <div class="text-h6">{{stock.pivot.gen}}</div>
           <div class="text--2">{{stock.alias}}</div>
@@ -83,12 +86,12 @@
       <q-form @submit.prevent="setReceivedProduct">
         <q-card-section>
           <div class="row items-start justify-between">
-            <div class="text-center col">
+            <div class="text-center col text-primary">
               <div>Solicitud</div>
               <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.units.id==3? `Caja${wndCounter.item.pivot.amount!=1?'s':''}`: `Pieza${wndCounter.item.pivot.amount!=1?'s':''}` }}</div>
             </div>
 
-            <div class="text-center col">
+            <div class="text-center col text-orange-10">
               <div>Salida</div>
               <div class="text-bold">{{ wndCounter.item.pivot.toDelivered}} {{ wndCounter.item.units.id==3 ? (wndCounter.item.pivot.toDelivered!=1 ? "Cajas":"Caja"):(wndCounter.item.pivot.toDelivered!=1 ? "Piezas":"Pieza") }} <small>({{ (wndCounter.item.units.id==3 ? (wndCounter.item.pivot.toDelivered*wndCounter.item.pivot.ipack):wndCounter.item.pivot.toDelivered)}} pzs)</small></div>
             </div>
@@ -153,7 +156,7 @@
 </template>
 
 <script setup>
-  import { ref, computed, onMounted, nextTick } from 'vue';
+  import { ref, computed, nextTick } from 'vue';
   import { useQuasar } from 'quasar';
   import { useRoute, useRouter } from 'vue-router';
   import RestockApi from 'src/api/RestockApi.js';
@@ -221,6 +224,7 @@
   });
 
   const openEditor = (item) => {
+    console.log(item);
     wndCounter.value.item = item;
     wndCounter.value.form.count = typeof item.pivot.toReceived=="number" ? item.pivot.toReceived:0;
     wndCounter.value.form.ipack = typeof item.pivot.ipack=="number" ? item.pivot.ipack:item.pieces;
@@ -282,6 +286,11 @@
       console.log(response.data);
 
       if(response.data){
+        $q.notify({
+          message:`Se genero la entrada <b class="text-h6">${response.data.invoice.folio}</b>`,
+          html:true, position:"center", icon:"done", timeout:5000, color:"positive"
+        });
+
         $emit("reload");
       }else{ alert("Error 500: Ocurrio un error inesperado :("); }
     }else{ alert(`Error ${response.status}: ${response.data}`); }
@@ -290,5 +299,7 @@
   }
 
   const rowClicked = (a,row,b) => enabledEditor.value ? openEditor(row):null;
+
+  const reload = () => $emit("reload");
 
 </script>
