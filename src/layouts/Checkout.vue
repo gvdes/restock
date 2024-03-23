@@ -23,6 +23,21 @@
       </div>
     </q-header>
 
+    <q-dialog v-if="ostate&&ostate.id==4" v-model="wndStartCheck.state" persistent>
+          <q-card>
+            <q-card-section class="row items-center">
+              <q-avatar icon="warning" color="orange-14" text-color="white" />
+              <span class="q-mx-sm text-h6">Iniciar CheckOut #{{$route.params.oid}}</span>
+            </q-card-section>
+            <q-card-section>
+              <q-select v-model="supply.val" :options="supply.opts" label="Verificador" option-label="complete_name" filled />
+            </q-card-section>
+            <q-card-actions vertical align="center">
+              <q-btn flat label="Si" color="primary" @click="startCheckin" :disable="supply.val==null"/>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
     <q-page-container>
       <q-page padding>
         <div class="row">
@@ -201,7 +216,7 @@
         </q-input>
         <q-btn color="white" text-color="cyan-9" label="Terminar" icon="done" @click="wndNextState.state=true" v-if="counteds.length>0" no-caps/>
       </q-footer>
-      <q-footer v-if="ostate&&ostate.id!=3" bordered class="bg-orange-9 text-white">
+      <q-footer v-if="ostate&&ostate.id!=5" bordered class="bg-orange-9 text-white">
         <div class="q-pa-md text-bold text-uppercase text-center">{{ostate.name}}</div>
       </q-footer>
     </q-page-container>
@@ -214,13 +229,15 @@
   import { useRoute, useRouter } from 'vue-router';
   import dayjs from 'dayjs';
   import RestockApi from 'src/api/RestockApi.js';
+  import AssitApi from 'src/api/AssistApi.js';
   import { useQuasar } from 'quasar';
 
   const $route = useRoute();
   const $router = useRouter();
   const $q = useQuasar();
 
-  const viewcols = ref(["code", "assocs", "ipack", "request", "uspply", "delivery", "reqinpzs", "checkout"]);
+  const wndStartCheck = ref({state:true})
+  const viewcols = ref(["code", "assocs", "ipack", "request", "uspply", "delivery", "reqinpzs", "checkout","stocks"]);
   const productsdb = ref([]);
   const finder = ref("");
   const iptcounter = ref(null);
@@ -250,6 +267,7 @@
       { name:'section', label:'Seccion', field:'section', align:"left" },
       { name:'family', label:'Familia', field:'family', align:"left" },
       { name:'category', label:'Categoria', field:'category', align:"left" },
+      { name:'stocks', label:'Stock (pzs)', field: row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0), sortable:true, classes:row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0)<=0?'text-red text-bold':'text-bold text-primary', align:'center', coldesc:"Stock total en almacenes GENERALES (CEDIS+PAN)" },
     ],
     filter:'',
     pagination:{
@@ -263,10 +281,14 @@
     item:null,
     form:{ count:0, ipack:null, setting:false }
   });
+  const supply = ref({
+    val:null,
+    opts:null
+  })
 
   const adminErrRequest = ref({ state:false, code:null, text:null});
   const wndNextState = ref({ state:false });
-  const enabledEditor = computed(() => ostate.value ? ostate.value.id==3 : false );
+  const enabledEditor = computed(() => ostate.value ? ostate.value.id==5 : false );
   const totalpieces = computed(() => productsdb.value.reduce( (am,p) => (am + (p.pivot._supply_by==3 ? (p.pivot.amount*p.pieces): p.pivot.amount)) ,0));
   const uncounteds = computed(() => productsdb.value.filter( p => !p.pivot.checkout ));
   const counteds = computed(() => productsdb.value.filter( p => p.pivot.checkout ));
@@ -362,6 +384,42 @@
     $q.loading.hide();
   }
 
+  const index = async () =>{
+    let supp = await AssitApi.getVerified();
+    console.log(supp);
+    supply.value.opts = supp
+  }
+
+
+  const startCheckin = async () => {
+    $q.loading.show({ message:"Inicando, espera..." });
+
+    let newState = 5;
+    let data = {id: $route.params.oid ,state:newState};
+    const response = await RestockApi.nextState(data);
+
+    if(response.status==200){
+      $q.notify({ message:`Validacion iniciada para el pedido  ${ $route.params.oid }`, icon:"done", position:"center", color:"teal" });
+      let dat =  {
+        supplyer:supply.value.val,
+        pedido: $route.params.oid ,
+        status:newState
+      }
+      let savesupply = await AssitApi.SaveVerified(dat);
+      console.log(savesupply)
+      if(savesupply.status==200){
+        init();
+        wndStartCheck.value.state = false;
+        $q.loading.hide();
+      }else{
+        alert(`Error ${savesupply.status}: ${savesupply.data} 2`);
+      }
+
+    }else{ alert(`Error ${response.status}: ${response.data} 1`); }
+
+  }
+
+  index();
   init();
 
 </script>

@@ -8,9 +8,14 @@ import axios from 'axios'
 // "export default () => {}" function below (which runs individually
 // for each client)
 const vizapi = axios.create({
-  // baseURL: 'http://192.168.12.183/vizapi/public/L'
+  // baseURL: 'http://192.168.10.112:1619/vizapi/public/L'
   baseURL: 'http://192.168.10.189/vizapi/public/L'
   // baseURL: 'http://192.168.1.68:80/arceus/public/api'
+});
+
+const assistdb = axios.create({
+  // baseURL: 'http://192.168.10.112:1920/Assist/public/api/restock'
+  baseURL: 'http://192.168.10.61:1619/Assist/public/api/restock'
 });
 
 vizapi.interceptors.response.use( response => {
@@ -42,4 +47,4 @@ vizapi.interceptors.response.use( response => {
 //   //       so you can easily perform requests against your app's API
 // })
 
-export { vizapi }
+export { vizapi, assistdb }

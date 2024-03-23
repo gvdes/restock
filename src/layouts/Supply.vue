@@ -118,7 +118,27 @@
             </q-form>
           </q-card>
         </q-dialog>
+
+        <q-dialog v-model="wndNextState.state">
+          <q-card>
+            <q-card-section class="row items-start">
+              <q-avatar icon="warning" color="orange-14" text-color="white" />
+              <div class="q-ml-md">
+                <div class="text-h6">Deseas terminar la El surtido?</div>
+                <div>EL se ira a la cola de verificacion</div>
+              </div>
+            </q-card-section>
+            <q-card-actions align="right">
+              <q-btn flat label="No" color="primary" v-close-popup no-caps/>
+              <q-btn flat label="Si" color="primary" @click="nextState" />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
+
       </q-page>
+
+
 
       <q-footer bordered class="bg-primary text-dark q-pa-sm row" elevated v-if="enabledEditor">
         <q-input color="white" v-model="finder" type="text" class="col" input-class="text-white text-h6 text-center text-uppercase" autofocus dense @keypress.enter="searchToSet" ref="iptfinder">
@@ -129,6 +149,7 @@
             <q-btn flat icon="fas fa-eraser" color="white" dense @click="finder=''" :disabled="!finder.length"/>
           </template>
         </q-input>
+        <q-btn color="white" text-color="cyan-9" label="Terminar" icon="done" @click="wndNextState.state=true" v-if="counteds.length>0" no-caps/>
       </q-footer>
       <q-footer v-if="ostate&&ostate.id!=3" bordered class="bg-orange-9 text-white">
         <div class="q-pa-md text-bold text-uppercase text-center">{{ostate.name}}</div>
@@ -148,6 +169,10 @@
   const $route = useRoute();
   const $router = useRouter();
   const $q = useQuasar();
+
+  const wndNextState = ref({
+    state:false
+  })
 
   const prodschecks = ref([]);
   const viewcols = ref(["code", "locs", "request", "uspply", "stocks", "delivery"]);
@@ -278,6 +303,20 @@
 
   const persistViewCols = () => {
     console.log("Hola");
+  }
+
+
+  const nextState = async () => {
+    $q.loading.show({ message: "Terminando, espera..." });
+    wndNextState.value.state = false;
+
+    let data = {id:$route.params.oid,state:4};
+    const response = await RestockApi.nextState(data);
+    console.log(response);
+
+    if(response.status==200){ init(); }
+
+    $q.loading.hide();
   }
 
   init();

@@ -47,8 +47,8 @@
               <PrinterSelect @selected="printForSupply"/>
             </q-menu>
           </q-btn>
-          <q-btn color="positive" icon="start" dense label="Iniciar Surtido" @click="startSupply" v-if="cstate&&cstate.id==2" />
-          <q-btn color="pink" icon="start" dense label="Emitir Salida" @click="wndGenInvoice.state=true" v-if="cstate&&cstate.id==6" />
+          <q-btn color="positive" icon="start" dense label="Iniciar Surtido" @click="selsupply" v-if="cstate&&cstate.id==2" />
+          <q-btn color="pink" icon="start" dense label="Emitir Salida" @click="genvoice" v-if="cstate&&cstate.id==6" />
         </q-card-actions>
       </q-card-section>
 
@@ -150,17 +150,34 @@
           <div>La salida emitira la factura correspondiente en Factusol.</div>
         </div>
       </q-card-section>
+      <q-card-section>
+        <q-select v-model="chof.val" :options="chof.opts" label="Chofer" filled option-label="complete_name" />
+      </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Cancelar" color="primary" v-close-popup no-caps/>
-        <q-btn flat label="Continuar" color="primary" @click="tryGenInvoice" no-caps/>
+        <q-btn flat label="Continuar" color="primary" @click="tryGenInvoice" no-caps :disable="chof.val == null"/>
       </q-card-actions>
     </q-card>
   </q-dialog>
+
+  <q-dialog v-model="viewSupply.state" persistent >
+    <q-card style="width: 400px;">
+      <q-card-section class="row items-center">
+        <q-select v-model="supply.val" :options="supply.opts" label="SELECCIONA SURTIDOR" option-label="complete_name" filled multiple counter max-values="4" hint="Maximo 4 colaboradores" style="width: 100%"/>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="Cancel" color="primary" v-close-popup />
+        <q-btn flat label="Continuar" color="primary" @click="startSupply" :disable="supply.val.length == 0"/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
 </template>
 
 <script setup>
   import { ref, computed, onBeforeMount, nextTick } from 'vue';
   import RestockApi from 'src/api/RestockApi.js';
+  import AssitApi from 'src/api/AssistApi.js';
   import { useRoute, useRouter } from 'vue-router';
   import dayjs from 'dayjs';
   import { useQuasar } from 'quasar';
@@ -174,6 +191,16 @@
     head:{type:Object, default:{}}
   });
 
+  const supply = ref({
+    opts:[],
+    val:[]
+  })
+  const chof =  ref({
+    opts:null,
+    val:null
+  })
+
+
   const $emit = defineEmits([ 'loaded', 'loading' ]);
 
   const head = ref($props.head);
@@ -185,6 +212,9 @@
   const startingStep = ref(false);
   const wndGenInvoice = ref({ state:false });
   const wndQRCode = ref({ state:false, key:null });
+  const viewSupply = ref({
+    state:false
+  });
   const viewcols = ref([]);
   const table = ref({
     columns:[
@@ -239,6 +269,10 @@
     $emit("loaded"); // desblockea la venta modal del padre que contiene eeste componente
   }
 
+  const selsupply = () => {
+    viewSupply.value.state = true;
+  }
+
   const startSupply = async () => {
     $emit("loading"); // blockea la venta modal del padre que contiene eeste componente
     startingStep.value=true;
@@ -250,8 +284,21 @@
     if(response.status==200){
       startingStep.value=false;
       $q.notify({ message:`Surtido iniciado para el pedido  ${head.value.id}`, icon:"done", position:"center", color:"teal" });
-      init();
-    }else{ alert(`Error ${response.status}: ${response.data}`); }
+      let dat =  {
+        supplyer:supply.value.val,
+        pedido:head.value.id,
+        status:newState
+      }
+      let savesupply = await AssitApi.SaveSupply(dat);
+      console.log(savesupply)
+      if(savesupply.status==200){
+        init();
+        viewSupply.value.state = false;
+      }else{
+        alert(`Error ${savesupply.status}: ${savesupply.data} 2`);
+      }
+
+    }else{ alert(`Error ${response.status}: ${response.data} 1`); }
 
     $emit("loaded"); // desblockea la venta modal del padre que contiene eeste componente
   }
@@ -263,12 +310,26 @@
     console.log(response);
 
     if(response.status==200){
+      console.log(response)
       if(response.data.invoice){
         $q.notify({
           message:`Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
           html:true, position:"center", icon:"done", timeout:5000, color:"positive"
         });
+        let dat =  {
+        supplyer:chof.value.val,
+        pedido:head.value.id,
+        status:7
+      }
+      let savesupply = await AssitApi.SaveChofi(dat);
+      if(savesupply.status == 200){
         init();
+        $q.notify({
+          message:`Pedido en ruta`,
+          position:"center", icon:"done", timeout:5000, color:"positive"
+        });
+      }else{ alert(`Error ${savesupply.status}: ${savesupply.data}`); }
+
       }
     }else{ alert(`Error ${response.status}: ${response.data}`); }
 
@@ -307,8 +368,23 @@
       $q.loading.hide();
     }else{ console.error(response); alert(`Error ${response.status}: ${response.data}`); }
   }
+  const index = async () =>{
+    let supp = await AssitApi.getSupply();
+    console.log(supp);
+    supply.value.opts = supp
+  }
+
+  const genvoice = async () => {
+    wndGenInvoice.value.state=true
+    let ch = await AssitApi.getChof();
+    console.log(ch);
+    chof.value.opts = ch.data
+  }
+
+
+
 
   onBeforeMount(() => viewcols.value = table.value.columns.map( c => c.name ) );
-
+  index();
   init();
 </script>
