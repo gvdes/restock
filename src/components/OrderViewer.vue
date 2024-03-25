@@ -42,6 +42,7 @@
 
         <q-card-actions class="col" align="right" v-if="cstate&&cstate.id>1">
           <q-btn color="pink-6" icon="qr_code" dense v-if="cstate&&cstate.id>6" @click="genQRKey"/>
+            <!-- <q-btn color="pink-6" icon="list" dense v-if="cstate&&cstate.id>6" @click="pdf"/> -->
           <q-btn color="indigo-10" icon="print" dense v-if="cstate&&cstate.id>2">
             <q-menu class="bg-grey-1 text-indigo-10" style="min-width:250px;">
               <PrinterSelect @selected="printForSupply"/>
@@ -182,6 +183,8 @@
   import dayjs from 'dayjs';
   import { useQuasar } from 'quasar';
   import QRCode from 'qrcode';
+  import {jsPDF} from "jspdf";
+  import  'jspdf-autotable'
   import PrinterSelect from 'src/components/PrinterSelect.vue';
 
   const $q = useQuasar();
@@ -337,7 +340,7 @@
   }
 
   const genQRKey = async () => {
-    let url = `http://192.168.12.189:2200/#/checkin/${head.value.id}?key=${wndQRCode.value.key}`;
+    let url = `http://192.168.10.189:2200/#/checkin/${head.value.id}?key=${wndQRCode.value.key}`;
     wndQRCode.value.state=true;
     nextTick(() => QRCode.toCanvas(document.getElementById('qrcode'), url) );
   }
@@ -381,6 +384,70 @@
     chof.value.opts = ch.data
   }
 
+  const pdf = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(8)
+    doc.text('NUMERO PEDIDO:',10,10,'left')
+    doc.text('P-'+head.value.id,10,15,'left');
+    doc.setFontSize(12)
+    doc.text('COPIA',185,10,'left');
+    doc.text('SUCURSAL BOLIVIA MOCHILA',10,25,'left')
+
+    doc.text('LLUVIA LIGTH SA DE CV',120,25,'left')
+    doc.setFontSize(8)
+
+    doc.text('CALLE AN PABLO 10 LOC G 10',120,30,'left')
+    doc.text('06090',120,35,'left')
+    doc.text('DELEG, CUAUHTEMOC CDMX       CENTRO',120,40,'left')
+    doc.text('LLI1210184G8',120,45,'left')
+
+    doc.text('HORA DE IMP:',10,50,'left')
+    doc.rect(45, 46, 15, 5);
+
+    doc.text('HR SALIDA M:',61,50,'left')
+    doc.rect(91, 46, 15, 5);
+
+
+    doc.text('LLEGADA A SUCURSAL:',10,60,'left')
+    doc.rect(45, 56, 15, 5);
+
+    doc.text('SALIDA SUCURSAL:',61,60,'left')
+    doc.rect(91, 56, 15, 5);
+
+    doc.rect(120, 51, 80, 5);
+    doc.text('DOCUMENTO',121,55,'left')
+    doc.text('FACTURA',121,60,'left')
+
+    doc.text('NUMERO',143,55,'left')
+    doc.text('000376',143,60,'left')
+
+
+    doc.text('PAGINA',165,55,'left')
+    doc.text('1 DE 1',165,60,'left')
+
+    doc.text('FECHA',185,55,'left')
+    doc.text('18/03/2024',185,60,'left')
+    doc.autoTable({
+      startY:66,
+      head: [['Name', 'Email', 'Country']],
+      body: [
+        ['David', 'david@example.com', 'Sweden'],
+        ['Castille', 'castille@example.com', 'Spain'],
+      ],
+    })
+
+
+
+
+    doc.setFontSize(25)
+    doc.setFont('helvetica','bold')
+    doc.text("GRUPO VIZCARRA",105,10,"center");
+    doc.save('P-'+head.value.id);
+
+
+    doc.autoPrint();
+
+  }
 
 
 

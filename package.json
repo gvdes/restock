@@ -13,6 +13,8 @@
     "apexcharts": "^3.36.3",
     "axios": "^0.21.1",
     "dayjs": "^1.11.6",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "pinia": "^2.0.11",
     "qrcode": "^1.5.1",
     "quasar": "^2.6.0",
