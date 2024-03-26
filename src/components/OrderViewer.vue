@@ -37,7 +37,7 @@
 
         <q-card-section v-if="cstate&&cstate.id>9">
           <div>Entrada</div>
-          <div class="text-bold text-orange-10">{{ head.invoice }}</div>
+          <div class="text-bold text-orange-10">{{ head.invoice_received }}</div>
         </q-card-section>
 
         <q-card-actions class="col" align="right" v-if="cstate&&cstate.id>1">
