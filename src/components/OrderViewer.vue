@@ -42,7 +42,7 @@
 
         <q-card-actions class="col" align="right" v-if="cstate&&cstate.id>1">
           <q-btn color="pink-6" icon="qr_code" dense v-if="cstate&&cstate.id>6" @click="genQRKey"/>
-            <!-- <q-btn color="pink-6" icon="list" dense v-if="cstate&&cstate.id>6" @click="pdf"/> -->
+            <q-btn color="pink-6" icon="list" dense v-if="cstate&&cstate.id>6" @click="pdf(invoice)"/>
           <q-btn color="indigo-10" icon="print" dense v-if="cstate&&cstate.id>2">
             <q-menu class="bg-grey-1 text-indigo-10" style="min-width:250px;">
               <PrinterSelect @selected="printForSupply"/>
@@ -218,6 +218,7 @@
   const viewSupply = ref({
     state:false
   });
+  const invoice = ref(null);
   const viewcols = ref([]);
   const table = ref({
     columns:[
@@ -268,6 +269,7 @@
     log.value = response.data.log.map( l => { l.pivot.details = JSON.parse(l.pivot.details); return l; });
     cstate.value = response.data.status;
     wndQRCode.value.key = response.data.entry_key;
+    invoice.value = response.data.invoice;
     loading.value = false;
     $emit("loaded"); // desblockea la venta modal del padre que contiene eeste componente
   }
@@ -325,8 +327,10 @@
         status:7
       }
       let savesupply = await AssitApi.SaveChofi(dat);
+
       if(savesupply.status == 200){
         init();
+        pdf(response.data.invoice.folio)
         $q.notify({
           message:`Pedido en ruta`,
           position:"center", icon:"done", timeout:5000, color:"positive"
@@ -384,69 +388,136 @@
     chof.value.opts = ch.data
   }
 
-  const pdf = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(8)
-    doc.text('NUMERO PEDIDO:',10,10,'left')
-    doc.text('P-'+head.value.id,10,15,'left');
-    doc.setFontSize(12)
-    doc.text('COPIA',185,10,'left');
-    doc.text('SUCURSAL BOLIVIA MOCHILA',10,25,'left')
+  const pdf =  async(data) => {
+    // console.log(data.folio);
+    let sal = {
+      salida:data
+    }
+    console.log(sal);
+    let dat = await AssitApi.getSalida(sal);
+    console.log(dat);
+    if(dat.status == 200){
+      const qrData = `http://192.168.10.189:2200/#/checkin/${head.value.id}?key=${wndQRCode.value.key}`;
+        const qrOptions ={
+          margin:1,
+          width:1,
+          height:1
+        }
+        const canvas = document.createElement('canvas');
+        await QRCode.toCanvas(canvas, qrData, qrOptions);
+        const imgData = canvas.toDataURL('image/png');
+        const doc = new jsPDF();
+        let chunks = [];
+        const arreglo = dat.data.productos.map(producto => Object.values(producto));
+        const paginas = Math.ceil(arreglo.length / 20);
+        for (var i = 0; i < arreglo.length; i += 20){
+          chunks.push(arreglo.slice(i,i + 20));
+        }
+        chunks.forEach(function(chunk, index){
+          if(index > 0){
+            doc.addPage();
+          }
 
-    doc.text('LLUVIA LIGTH SA DE CV',120,25,'left')
-    doc.setFontSize(8)
+          let sumaBullfa = 0;
+          for (let i = 0; i < chunk.length; i++) {
+              sumaBullfa += parseFloat(chunk[i][1]); // Sumar al total la propiedad 'BULLFA' convertida a número
+          }
 
-    doc.text('CALLE AN PABLO 10 LOC G 10',120,30,'left')
-    doc.text('06090',120,35,'left')
-    doc.text('DELEG, CUAUHTEMOC CDMX       CENTRO',120,40,'left')
-    doc.text('LLI1210184G8',120,45,'left')
+          let totcan = 0;
+          for (let i = 0; i < chunk.length; i++) {
+              totcan += parseFloat(chunk[i][3]); // Sumar al total la propiedad 'BULLFA' convertida a número
+          }
 
-    doc.text('HORA DE IMP:',10,50,'left')
-    doc.rect(45, 46, 15, 5);
+        doc.setFontSize(25)
+        doc.setFont('helvetica','bold')
+        doc.text("GRUPO VIZCARRA",105,10,"center");
+        doc.setFontSize(8)
+        doc.text('NUMERO PEDIDO:',10,10,'left')
+        doc.text(dat.data.salida.FOLIO,10,15,'left');
+        doc.setFontSize(12)
+        doc.text('ORIGINAL',185,10,'left');
+        doc.text(dat.data.salida.CLIENTE,10,25,'left')
+        doc.text('LLUVIA LIGTH SA DE CV',120,25,'left')
+        doc.setFontSize(8)
+        doc.text('CALLE AN PABLO 10 LOC G 10',120,30,'left')
+        doc.text('06090',120,35,'left')
+        doc.text('DELEG, CUAUHTEMOC CDMX       CENTRO',120,40,'left')
+        doc.text('LLI1210184G8',120,45,'left')
+        doc.text('HORA DE IMP:',10,50,'left')
+        doc.rect(45, 46, 15, 5);
+        doc.text('HR SALIDA M:',61,50,'left')
+        doc.rect(91, 46, 15, 5);
+        doc.text('LLEGADA A SUCURSAL:',10,60,'left')
+        doc.rect(45, 56, 15, 5);
+        doc.text('SALIDA SUCURSAL:',61,60,'left')
+        doc.rect(91, 56, 15, 5);
+        doc.rect(120, 51, 80, 5);
+        doc.text('DOCUMENTO',121,55,'left')
+        doc.text('FACTURA',121,60,'left')
+        doc.text('NUMERO',143,55,'left')
+        doc.text(dat.data.salida.FACTURA,143,60,'left')
+        doc.text('PAGINA',165,55,'left')
+        doc.text(`${index + 1} de ${paginas}`,165,60,'left')
+        doc.text('FECHA',185,55,'left')
+        const fecha = dat.data.salida.FECHA.replace(/\b0+/g, '')
+        doc.text(fecha,185,60,'left')
+        doc.autoTable({
+          startX:10,
+          startY:65,
+          theme:'plain',
+          styles: { cellPadding: 1, fontSize: 8 },
+          head: [['CREADOR DOC','ALMACEN','AGENTE','FORMA DE PAGO']],
+          body: [
+          ['APP',dat.data.salida.AMACEN,dat.data.salida.AGENTE,dat.data.salida.FPAGO],
+          ],
+        })
 
-    doc.text('HR SALIDA M:',61,50,'left')
-    doc.rect(91, 46, 15, 5);
+          doc.autoTable({
+            startX:10,
+            startY:80,
+            theme:'striped',
+            styles: { cellPadding: .6, fontSize: 8 },
+            head: [['ARTICULO','CAJAS','U.X CAJA','CANTIDAD','DESCRIPCION']],
+            body: chunk,
+          })
 
+          doc.setFontSize(11)
+        doc.text('TOTAL CAJAS:',10,200,'left')
+        doc.text(sumaBullfa.toString(),40,200,'left')
+        doc.text('TOTAL UNIDDADES:',60,200,'left')
+        doc.text(totcan.toString(),100,200,'left')
+        doc.setFontSize(8)
+        doc.text('Debo(emos) y pagare(mos) incondicionalmente por este pagare a la order de GRUPO VIZCARRA, en la ciudad de Mexico,',10,210,'left')
+        doc.text('la cantidad de el valor recibido a mi(nuestra) entera satisfaccion',10,215,'left')
+        doc.text('Este pagare forma parte de una serie numerica del 1 al y 9 y todos estos estan sujetos a la condicion, de que al no pagarse cualquiera de ellos a su',10,220,'left')
+        doc.text('vencimiento sean exigibles todos los que le sigan en numero, ademas de los ya vencidosm desde la fecha de su vencimiento de el presente documento',10,225,'left')
+        doc.text('hasta el dia de su liquidacion, causaran intereses moratorios al tipo del % mensual en esta ciudad justamente con el principal',10,230,'left')
+        doc.setFontSize(15)
+        doc.text('______________',31,248,'center')
+        doc.text('AUTORIZO',20,254,'left')
+        doc.text('______________',85,248,'center')
+        doc.text('CHOFER',75,254,'left')
+        doc.text('______________',140,248,'center')
+        doc.text('RECIBIO',130,254,'left')
+        doc.text('______________',168,248,'left')
+        doc.text('FECHA Y HORA',168,254,'left')
+        doc.setFontSize(9)
+        doc.text('UNA VEZ ENTREGADA LA MERCANCIA EN LA FLETERA O DOMICILIO QUE INDIQUE EL CLIENTE ',10,260,'left')
+        doc.text('LLUVIA LIGHT SA DE CV NO ES RESPONSABLE POR PEDIDAS TOTALES, PARCIALES ',10,265,'left')
+        doc.text('O CUALQUIER TIPO DE DANO EN LA MERCANCIA DE ESTE DOCUMENTO ',10,270,'left')
+        doc.setFont('helvetica','bold')
+        doc.setFontSize(12)
+        doc.text('NO SE ACEPTAN CAMBIOS NI DEVOLUCIONES',10,280,'left')
+        doc.setFontSize(25)
+        doc.setFont('helvetica','bold')
+        doc.text("GRUPO VIZCARRA",105,10,"center");
+        doc.addImage(imgData,'PNG', 167, 255);
+        })
+        doc.save(dat.data.salida.FACTURA)
 
-    doc.text('LLEGADA A SUCURSAL:',10,60,'left')
-    doc.rect(45, 56, 15, 5);
-
-    doc.text('SALIDA SUCURSAL:',61,60,'left')
-    doc.rect(91, 56, 15, 5);
-
-    doc.rect(120, 51, 80, 5);
-    doc.text('DOCUMENTO',121,55,'left')
-    doc.text('FACTURA',121,60,'left')
-
-    doc.text('NUMERO',143,55,'left')
-    doc.text('000376',143,60,'left')
-
-
-    doc.text('PAGINA',165,55,'left')
-    doc.text('1 DE 1',165,60,'left')
-
-    doc.text('FECHA',185,55,'left')
-    doc.text('18/03/2024',185,60,'left')
-    doc.autoTable({
-      startY:66,
-      head: [['Name', 'Email', 'Country']],
-      body: [
-        ['David', 'david@example.com', 'Sweden'],
-        ['Castille', 'castille@example.com', 'Spain'],
-      ],
-    })
-
-
-
-
-    doc.setFontSize(25)
-    doc.setFont('helvetica','bold')
-    doc.text("GRUPO VIZCARRA",105,10,"center");
-    doc.save('P-'+head.value.id);
-
-
-    doc.autoPrint();
-
+    }else{
+      console.error('No se logro imprimir la factura');
+    }
   }
 
 

@@ -33,4 +33,8 @@ export default{
     let burl = `/getChof`;
     return assistdb.get(burl).then( done => done ).catch( fail => fail);
   },
+  getSalida(data){
+    let burl = `/getSalida`;
+    return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
+  },
 }
