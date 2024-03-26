@@ -461,7 +461,7 @@
         doc.text('FECHA',185,55,'left')
         const fecha = dat.data.salida.FECHA.replace(/\b0+/g, '')
         doc.text(fecha,185,60,'left')
-        doc.autoTable({
+        autoTable( doc, {
           startX:10,
           startY:65,
           theme:'plain',
@@ -472,7 +472,7 @@
           ],
         })
 
-          doc.autoTable({
+        autoTable(doc,{
             startX:10,
             startY:80,
             theme:'striped',
