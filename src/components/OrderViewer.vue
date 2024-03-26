@@ -461,25 +461,25 @@
         doc.text('FECHA',185,55,'left')
         const fecha = dat.data.salida.FECHA.replace(/\b0+/g, '')
         doc.text(fecha,185,60,'left')
-        doc.autoTable({
-          startX:10,
-          startY:65,
-          theme:'plain',
-          styles: { cellPadding: 1, fontSize: 8 },
-          head: [['CREADOR DOC','ALMACEN','AGENTE','FORMA DE PAGO']],
-          body: [
-          ['APP',dat.data.salida.AMACEN,dat.data.salida.AGENTE,dat.data.salida.FPAGO],
-          ],
-        })
+        // doc.autoTable({
+        //   startX:10,
+        //   startY:65,
+        //   theme:'plain',
+        //   styles: { cellPadding: 1, fontSize: 8 },
+        //   head: [['CREADOR DOC','ALMACEN','AGENTE','FORMA DE PAGO']],
+        //   body: [
+        //   ['APP',dat.data.salida.AMACEN,dat.data.salida.AGENTE,dat.data.salida.FPAGO],
+        //   ],
+        // })
 
-          doc.autoTable({
-            startX:10,
-            startY:80,
-            theme:'striped',
-            styles: { cellPadding: .6, fontSize: 8 },
-            head: [['ARTICULO','CAJAS','U.X CAJA','CANTIDAD','DESCRIPCION']],
-            body: chunk,
-          })
+        //   doc.autoTable({
+        //     startX:10,
+        //     startY:80,
+        //     theme:'striped',
+        //     styles: { cellPadding: .6, fontSize: 8 },
+        //     head: [['ARTICULO','CAJAS','U.X CAJA','CANTIDAD','DESCRIPCION']],
+        //     body: chunk,
+        //   })
 
           doc.setFontSize(11)
         doc.text('TOTAL CAJAS:',10,200,'left')
