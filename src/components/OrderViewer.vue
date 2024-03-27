@@ -321,6 +321,9 @@
           message:`Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
           html:true, position:"center", icon:"done", timeout:5000, color:"positive"
         });
+        wndQRCode.value.key = response.data.requisition.entry_key;
+        console.log(wndQRCode.value.key)
+        pdf(response.data.invoice.folio)
         let dat =  {
         supplyer:chof.value.val,
         pedido:head.value.id,
@@ -330,7 +333,7 @@
 
       if(savesupply.status == 200){
         init();
-        pdf(response.data.invoice.folio)
+
         $q.notify({
           message:`Pedido en ruta`,
           position:"center", icon:"done", timeout:5000, color:"positive"
