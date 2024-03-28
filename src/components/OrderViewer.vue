@@ -416,6 +416,12 @@
         for (var i = 0; i < arreglo.length; i += 20){
           chunks.push(arreglo.slice(i,i + 20));
         }
+        for (let i = 0; i < 2; i++){
+          let copias = 'ORIGINAL'
+          if(i > 0 ){
+            copias = 'COPIA'
+            doc.addPage();
+          }
         chunks.forEach(function(chunk, index){
           if(index > 0){
             doc.addPage();
@@ -438,7 +444,7 @@
         doc.text('NUMERO PEDIDO:',10,10,'left')
         doc.text(dat.data.salida.FOLIO,10,15,'left');
         doc.setFontSize(12)
-        doc.text('ORIGINAL',185,10,'left');
+        doc.text(copias,185,10,'left');
         doc.text(dat.data.salida.CLIENTE,10,25,'left')
         doc.text('LLUVIA LIGTH SA DE CV',120,25,'left')
         doc.setFontSize(8)
@@ -516,6 +522,7 @@
         doc.text("GRUPO VIZCARRA",105,10,"center");
         doc.addImage(imgData,'PNG', 167, 255);
         })
+      }
         doc.save(dat.data.salida.FACTURA)
 
     }else{
