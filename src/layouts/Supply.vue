@@ -23,6 +23,7 @@
       </div>
     </q-header>
 
+
     <q-page-container>
       <q-page padding>
         <q-table row-key="id" flat
@@ -175,7 +176,7 @@
   })
 
   const prodschecks = ref([]);
-  const viewcols = ref(["code", "locs", "request", "uspply", "stocks", "delivery"]);
+  const viewcols = ref(["code", "notes","locs", "request", "uspply", "stocks", "delivery"]);
   const from = ref(null);
   const productsdb = ref([]);
   const finder = ref("");
@@ -188,7 +189,8 @@
       { name:'code', label:'Codigo', field:'code', align:"left", coldesc:"Codigo principal del producto" },
       { name:'assocs', label:'Asociados', field: row => row.variants.length ? row.variants.map( p => p.barcode).join(', ') : null, align:"left", coldesc:"Codigos relacionados al codigo principal" },
       { name:'bcode', label:'Codigo de Barras', field:'barcode', align:"center", coldesc:"Codigo de barras principal" },
-      { name:'locs', label:'Ubicacion', field: row => row.locations.length ? row.locations.map( l => l.path ).join(", ") :'--', align:"left", coldesc:"Ubicaciones en almacen general" },
+      { name:'notes', label:'Notas', field: row => row.pivot.comments, align:"left" },
+      { name:'locs', label:'Ubicacion', field: row => row.locations.length ? row.locations.map( l => l.path ).join(", ") :'--', align:"left", coldesc:"Ubicaciones en almacen general", sortable:true},
       { name:'ipack', label:'PxC', field: row => typeof row.pivot.ipack=="number" ? row.pivot.ipack:row.pieces, align:"center", coldesc:"Unidades x Embalaje" },
       { name:'request', label:'Solicitud', field: row => row.pivot.amount, align:"center", coldesc:"Embalaje solicitado" },
       { name:'uspply', label:'Unidad', field: row => row.units.id==3? 'Cajas' :'Piezas', align:'left', coldesc:"Unidad de embalaje del producto"},
@@ -207,6 +209,7 @@
       { name:'section', label:'Seccion', field:'section', align:"left" },
       { name:'family', label:'Familia', field:'family', align:"left" },
       { name:'category', label:'Categoria', field:'category', align:"left" },
+
     ],
     filter:'',
     pagination:{

@@ -392,7 +392,8 @@
   }
 
   const pdf =  async(data) => {
-    // console.log(data.folio);
+    console.log(data);
+    console.log(head.value.notes)
     let sal = {
       salida:data
     }
@@ -442,7 +443,7 @@
         doc.text("GRUPO VIZCARRA",105,10,"center");
         doc.setFontSize(8)
         doc.text('NUMERO PEDIDO:',10,10,'left')
-        doc.text(dat.data.salida.FOLIO,10,15,'left');
+        doc.text(`${dat.data.salida.FOLIO} - ${head.value.notes}`,10,15,'left');
         doc.setFontSize(12)
         doc.text(copias,185,10,'left');
         doc.text(dat.data.salida.CLIENTE,10,25,'left')
