@@ -28,6 +28,7 @@
           <div>{{ cstate.name }}</div>
           <div class="text--1">{{ dayjs(logstate.updated_at).format("YYYY-MM-DD hh:mm A") }}</div>
           <div v-if="head.notes"><q-icon name="info" color="pink-5" size="20px"/>{{ head.notes }}</div>
+          <div v-for="(parti, index) in partition " :key="index">{{parti._suplier}}</div>
         </q-card-section>
 
         <q-card-section v-if="cstate&&cstate.id>6">
@@ -49,7 +50,7 @@
             </q-menu>
           </q-btn>
           <q-btn color="positive" icon="start" dense label="Iniciar Surtido" @click="selsupply" v-if="cstate&&cstate.id==2" />
-          <q-btn color="pink" icon="start" dense label="Emitir Salida" @click="genvoice" v-if="cstate&&cstate.id==6" />
+          <q-btn color="pink" icon="start" dense label="Emitir Salida" @click="genvoice" v-if="enableInvoice" />
         </q-card-actions>
       </q-card-section>
 
@@ -152,6 +153,9 @@
         </div>
       </q-card-section>
       <q-card-section>
+        <q-select v-model="selSupply" :options="partition" label="Surtidor" filled option-label="_suplier" option-value="_suplier_value" :option-disable="(item) => item._status != 6 ? true :false" />
+      </q-card-section>
+      <q-card-section v-if="selSupply ">
         <q-select v-model="chof.val" :options="chof.opts" label="Chofer" filled option-label="complete_name" />
       </q-card-section>
       <q-card-actions align="right">
@@ -203,6 +207,8 @@
     val:null
   })
 
+  const selSupply =ref(null)
+
 
   const $emit = defineEmits([ 'loaded', 'loading' ]);
 
@@ -215,6 +221,7 @@
   const startingStep = ref(false);
   const wndGenInvoice = ref({ state:false });
   const wndQRCode = ref({ state:false, key:null });
+  const partition = ref(null);
   const viewSupply = ref({
     state:false
   });
@@ -259,6 +266,8 @@
   const totalpieces = computed(() => basket.value.reduce( (am,p) => (am + (p.pivot._supply_by==3 ? (p.pivot.amount*p.pieces): p.pivot.amount)) ,0));
   const showBtnNextState = computed(() => cstate.value && (cstate.value.id==2||cstate.value.id==6));
   const logstate = computed(() => log.value.find( l => l.id==cstate.value.id).pivot );
+  const enableInvoice = computed(() => partition.value.map(e => e._status).includes(6))
+
 
   const init = async () => {
     $emit("loading"); // blockea la venta modal del padre que contiene eeste componente
@@ -267,6 +276,7 @@
     console.log(response.data);
     basket.value = response.data.products;
     log.value = response.data.log.map( l => { l.pivot.details = JSON.parse(l.pivot.details); return l; });
+    partition.value = response.data.partition
     cstate.value = response.data.status;
     wndQRCode.value.key = response.data.entry_key;
     invoice.value = response.data.invoice;
@@ -379,9 +389,15 @@
     }else{ console.error(response); alert(`Error ${response.status}: ${response.data}`); }
   }
   const index = async () =>{
-    let supp = await AssitApi.getSupply();
-    console.log(supp);
-    supply.value.opts = supp
+    if(cstate.value > 2){
+      let supp = await AssitApi.getSuppliers(head.value.id);
+      console.log(supp);
+      supply.value.opts = supp
+    }else{
+      let supp = await AssitApi.getSupply();
+      console.log(supp);
+      supply.value.opts = supp
+    }
   }
 
   const genvoice = async () => {
@@ -392,8 +408,7 @@
   }
 
   const pdf =  async(data) => {
-    console.log(data);
-    console.log(head.value.notes)
+    // console.log(data.folio);
     let sal = {
       salida:data
     }
@@ -443,7 +458,7 @@
         doc.text("GRUPO VIZCARRA",105,10,"center");
         doc.setFontSize(8)
         doc.text('NUMERO PEDIDO:',10,10,'left')
-        doc.text(`${dat.data.salida.FOLIO} - ${head.value.notes}`,10,15,'left');
+        doc.text(dat.data.salida.FOLIO,10,15,'left');
         doc.setFontSize(12)
         doc.text(copias,185,10,'left');
         doc.text(dat.data.salida.CLIENTE,10,25,'left')

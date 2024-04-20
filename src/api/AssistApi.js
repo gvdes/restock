@@ -37,4 +37,8 @@ export default{
     let burl = `/getSalida`;
     return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
   },
+  nextState(data){
+    let burl = `/changeStatus`;
+    return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
+  }
 }

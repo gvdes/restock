@@ -4,7 +4,7 @@
       <q-toolbar>
         <q-btn flat round dense icon="arrow_back" @click="$router.replace('/checkout');" />
         <q-toolbar-title>
-          Pedido {{ $route.params.oid }}
+          Pedido {{ $route.params.oid }} -- {{ partition?._suplier}}
         </q-toolbar-title>
         <q-btn color="white" icon="sync" @click="init" round dense flat />
       </q-toolbar>
@@ -23,7 +23,7 @@
       </div>
     </q-header>
 
-    <q-dialog v-if="ostate&&ostate.id==4" v-model="wndStartCheck.state" persistent>
+    <q-dialog v-if="partition&&partition._status == 5&&partition._out_verified == null " v-model="wndStartCheck.state" persistent>
           <q-card>
             <q-card-section class="row items-center">
               <q-avatar icon="warning" color="orange-14" text-color="white" />
@@ -203,6 +203,22 @@
             </q-card-section>
           </q-card>
         </q-dialog>
+
+        <q-dialog v-model="selsupply" persistent>
+          <q-card style="width: 400px;">
+            <q-card-section class="row items-center">
+            <div>Quien Surtio?</div>
+            </q-card-section>
+            <q-card-section>
+              <q-select v-model="supplier.val" :options="supplier.opts" label="Surtidor" option-label="_suplier" option-value="_suplier_id" filled @update:model-value="setPartition" :option-disable="(i) => i._status != 4 ? true : false"/>
+            </q-card-section>
+            <q-card-actions align="right">
+              <q-btn flat label="Continuar" color="primary" v-close-popup :disable="supplier.val ? false : true" @click="changeStatus" />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
+
       </q-page>
 
       <q-footer bordered class="bg-cyan-10 text-dark q-pa-sm row" elevated v-if="enabledEditor">
@@ -216,8 +232,8 @@
         </q-input>
         <q-btn color="white" text-color="cyan-9" label="Terminar" icon="done" @click="wndNextState.state=true" v-if="counteds.length>0" no-caps/>
       </q-footer>
-      <q-footer v-if="ostate&&ostate.id!=5" bordered class="bg-orange-9 text-white">
-        <div class="q-pa-md text-bold text-uppercase text-center">{{ostate.name}}</div>
+      <q-footer v-if="partition&&partition._status!=5" bordered class="bg-orange-9 text-white">
+        <div class="q-pa-md text-bold text-uppercase text-center">{{partition?.status.name}}</div>
       </q-footer>
     </q-page-container>
 
@@ -237,6 +253,12 @@
   const $q = useQuasar();
 
   const wndStartCheck = ref({state:true})
+  const selsupply = ref(true);
+  const supplier = ref({
+    val:null,
+    opts: []
+  })
+  const partition = ref(null);
   const viewcols = ref(["code", "assocs", "ipack", "request", "uspply", "delivery", "reqinpzs", "checkout","stocks"]);
   const productsdb = ref([]);
   const finder = ref("");
@@ -288,10 +310,11 @@
 
   const adminErrRequest = ref({ state:false, code:null, text:null});
   const wndNextState = ref({ state:false });
-  const enabledEditor = computed(() => ostate.value ? ostate.value.id==5 : false );
-  const totalpieces = computed(() => productsdb.value.reduce( (am,p) => (am + (p.pivot._supply_by==3 ? (p.pivot.amount*p.pieces): p.pivot.amount)) ,0));
-  const uncounteds = computed(() => productsdb.value.filter( p => !p.pivot.checkout ));
-  const counteds = computed(() => productsdb.value.filter( p => p.pivot.checkout ));
+  const basketsupply = computed(() => supplier.value.val ? productsdb.value.filter(e => e.pivot._suplier_id == supplier.value.val._suplier_id) :[] )
+  const enabledEditor = computed(() => partition.value ? partition.value._status==5 : false );
+  const totalpieces = computed(() => basketsupply.value.reduce( (am,p) => (am + (p.pivot._supply_by==3 ? (p.pivot.amount*p.pieces): p.pivot.amount)) ,0));
+  const uncounteds = computed(() => basketsupply.value.filter( p => !p.pivot.checkout ));
+  const counteds = computed(() => basketsupply.value.filter( p => p.pivot.checkout ));
   const soldout = computed(() => counteds.value.filter( p => p.pivot.toDelivered==0));
   const wstock = computed(() => counteds.value.filter( p => p.pivot.toDelivered>0));
   const basket = computed(() => {
@@ -312,8 +335,16 @@
     if(response.status==200){
       productsdb.value = response.data.products;
       ostate.value = response.data.status;
+      supplier.value.opts = response.data.partition
       $q.loading.hide();
     }else{ displayErrRequest(response); }
+  }
+
+  const setPartition = (a )=> {
+    partition.value = a
+    if(a._status == 5){
+      selsupply.value = false
+    }
   }
 
   const rowClicked = (a,row,b) => enabledEditor.value ? openEditor(row):null;
@@ -375,9 +406,10 @@
     $q.loading.show({ message: "Terminando, espera..." });
     wndNextState.value.state = false;
 
-    let data = {id:$route.params.oid,state:6};
-    const response = await RestockApi.nextState(data);
+    let data = {id:$route.params.oid,state:6, supply:supplier.value.val._suplier_id};
+    const response = await AssitApi.nextState(data);
     console.log(response);
+    partition.value._status = 6
 
     if(response.status==200){ init(); }
 
@@ -390,22 +422,40 @@
     supply.value.opts = supp
   }
 
+  const changeStatus = async () => {
+    let data = {id:$route.params.oid, state: 5, supply:supplier.value.val._suplier_id }
+    console.log(data);
+    let resp = await AssitApi.nextState(data)
+    if(resp.status == 200){
+      partition.value._status = 5
+      console.log(resp)
+    }else{
+      console.log(resp)
+    }
+  }
+
 
   const startCheckin = async () => {
     $q.loading.show({ message:"Inicando, espera..." });
 
-    let newState = 5;
-    let data = {id: $route.params.oid ,state:newState};
-    const response = await RestockApi.nextState(data);
+    // let newState = 5;
+    // let data = {id: $route.params.oid ,state:newState};
+    // const response = await RestockApi.nextState(data);
 
-    if(response.status==200){
-      $q.notify({ message:`Validacion iniciada para el pedido  ${ $route.params.oid }`, icon:"done", position:"center", color:"teal" });
-      let dat =  {
-        supplyer:supply.value.val,
-        pedido: $route.params.oid ,
-        status:newState
-      }
-      let savesupply = await AssitApi.SaveVerified(dat);
+    // if(response.status==200){
+    //   $q.notify({ message:`Validacion iniciada para el pedido  ${ $route.params.oid }`, icon:"done", position:"center", color:"teal" });
+    //   let dat =  {
+    //     supplyer:supply.value.val,
+    //     pedido: $route.params.oid ,
+    //     status:newState
+    //   }
+    let data = {
+      pedido:$route.params.oid,
+      surtidor:supplier.value.val._suplier_id,
+      verified:supply.value.val.id
+    }
+    console.log(data)
+      let savesupply = await AssitApi.SaveVerified(data);
       console.log(savesupply)
       if(savesupply.status==200){
         init();
@@ -415,7 +465,7 @@
         alert(`Error ${savesupply.status}: ${savesupply.data} 2`);
       }
 
-    }else{ alert(`Error ${response.status}: ${response.data} 1`); }
+    // }else{ alert(`Error ${response.status}: ${response.data} 1`); }
 
   }
 

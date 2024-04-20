@@ -33,7 +33,7 @@
           :filter="table.filter"
           :visible-columns="viewcols"
           @row-click="rowClicked"
-        >
+         v-if="supply.val">
           <template v-slot:top>
             <div class="full-width row items-center justify-between">
               <q-input dense v-model="table.filter" placeholder="Buscar" input-class="text-uppercase" color="pink-5">
@@ -137,11 +137,24 @@
         </q-dialog>
 
 
+        <q-dialog v-model="selsupply" persistent>
+          <q-card style="width: 400px;">
+            <q-card-section class="row items-center">
+            <div>Quien eres?</div>
+            </q-card-section>
+            <q-card-section>
+              <q-select v-model="supply.val" :options="supply.opts" label="Surtidor" option-label="_suplier" option-value="_suplier_id" filled @update:model-value="setPartition" :option-disable="(i) => i._status != 3 ? true : false" />
+            </q-card-section>
+            <q-card-actions align="right">
+              <q-btn flat label="Continuar" color="primary" v-close-popup :disable="supply.val ? false : true"  />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </q-page>
 
 
 
-      <q-footer bordered class="bg-primary text-dark q-pa-sm row" elevated v-if="enabledEditor">
+      <q-footer bordered class="bg-primary text-dark q-pa-sm row" elevated v-if="partition?._status == 3">
         <q-input color="white" v-model="finder" type="text" class="col" input-class="text-white text-h6 text-center text-uppercase" autofocus dense @keypress.enter="searchToSet" ref="iptfinder">
           <template v-slot:prepend>
             <q-icon name="fas fa-barcode" color="white" />
@@ -152,8 +165,8 @@
         </q-input>
         <q-btn color="white" text-color="cyan-9" label="Terminar" icon="done" @click="wndNextState.state=true" v-if="counteds.length>0" no-caps/>
       </q-footer>
-      <q-footer v-if="ostate&&ostate.id!=3" bordered class="bg-orange-9 text-white">
-        <div class="q-pa-md text-bold text-uppercase text-center">{{ostate.name}}</div>
+      <q-footer v-if="partition?._status != 3" bordered class="bg-orange-9 text-white">
+        <div class="q-pa-md text-bold text-uppercase text-center">{{partition?.status.name}}</div>
       </q-footer>
     </q-page-container>
 
@@ -165,6 +178,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import dayjs from 'dayjs';
   import RestockApi from 'src/api/RestockApi.js';
+  import AssistApi from 'src/api/AssistApi.js';
   import { useQuasar } from 'quasar';
 
   const $route = useRoute();
@@ -176,6 +190,11 @@
   })
 
   const prodschecks = ref([]);
+  const selsupply  = ref(true);
+  const supply = ref({
+    val:null,
+    opts:[]
+  });
   const viewcols = ref(["code", "notes","locs", "request", "uspply", "stocks", "delivery"]);
   const from = ref(null);
   const productsdb = ref([]);
@@ -225,15 +244,19 @@
     form:{ count:0, ipack:null, setting:false }
   });
 
-  const enabledEditor = computed(() => ostate.value ? ostate.value.id==3 : false );
-  const totalpieces = computed(() => productsdb.value.reduce( (am,p) => (am + (p.pivot._supply_by==3 ? (p.pivot.amount*p.pieces): p.pivot.amount)) ,0));
-  const uncounteds = computed(() => productsdb.value.filter( p => typeof p.pivot.toDelivered != "number"));
-  const counteds = computed(() => productsdb.value.filter( p => typeof p.pivot.toDelivered == "number"));
+  const partition = ref(null)
+
+
+  const enabledEditor = computed(() => ostate.value ? ostate.value.id==3 : false );// status de la particion
+  const totalpieces = computed(() => basketSupply.value.reduce( (am,p) => (am + (p.pivot._supply_by==3 ? (p.pivot.amount*p.pieces): p.pivot.amount)) ,0));
+  const uncounteds = computed(() => basketSupply.value.filter( p => typeof p.pivot.toDelivered != "number"));
+  const counteds = computed(() => basketSupply.value.filter( p => typeof p.pivot.toDelivered == "number"));
   const soldout = computed(() => counteds.value.filter( p => p.pivot.toDelivered==0));
   const wstock = computed(() => counteds.value.filter( p => p.pivot.toDelivered>0));
+  const basketSupply = computed(() => supply.value.val ?  productsdb.value.filter(e => e.pivot._suplier_id == supply.value.val._suplier_id) :[])
   const basket = computed(() => {
     let target = finder.value.toUpperCase().trim();
-    return target.length ? productsdb.value.filter( p => (p.code.match(target) || (p.barcode && p.barcode.match(target)) ) ) : productsdb.value;
+    return target.length ? basketSupply.value.filter( p => (p.code.match(target) || (p.barcode && p.barcode.match(target)) ) ) : basketSupply.value;
   });
 
   const init = async() => {
@@ -244,13 +267,19 @@
 
     if(response.status==200){
       productsdb.value = response.data.products;
+      supply.value.opts = response.data.partition
+
       ostate.value = response.data.status;
       from.value = response.data.from;
       $q.loading.hide()
     }else{ alert(`Error ${response.status}: ${response.data}`);  }
   }
 
-  const rowClicked = (a,row,b) => enabledEditor.value ? openEditor(row):null;
+  const setPartition = (a) => {
+    partition.value = a
+  }
+
+  const rowClicked = (a,row,b) => partition.value._status == 3 ? openEditor(row):null;
 
   const openEditor = (item) => {
     wndCounter.value.item = item;
@@ -309,13 +338,16 @@
   }
 
 
-  const nextState = async () => {
+  const nextState = async () => {//cambiar status solo a la particion // tambien no se te olvide que lo puedes poner en por surtir cuando seleccionen al validador para que cuando muestren se ponga en el 3 y pueda quitarse el surtidor
+
     $q.loading.show({ message: "Terminando, espera..." });
     wndNextState.value.state = false;
 
-    let data = {id:$route.params.oid,state:4};
-    const response = await RestockApi.nextState(data);
+    let data = {id:$route.params.oid,state:4,supply: supply.value.val._suplier_id };
+    console.log(data);
+    const response = await AssistApi.nextState(data);
     console.log(response);
+    partition.value._status = response.data.state
 
     if(response.status==200){ init(); }
 
