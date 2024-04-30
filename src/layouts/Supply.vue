@@ -4,8 +4,12 @@
       <q-toolbar>
         <q-btn flat round dense icon="arrow_back" @click="$router.replace('/supply');" />
         <q-toolbar-title>
-          Pedido {{ $route.params.oid }} <span class="text--3" v-if="from">- {{from.alias}}</span>
+          Pedido {{ $route.params.oid }} <span class="text--3" v-if="from">- {{from.alias}} </span>
         </q-toolbar-title>
+        {{ supply.val?._suplier }}
+        <q-space />
+        {{ order.notes}}
+        <q-space />
         <q-btn color="pink-5" icon="sync" @click="init" round dense flat />
       </q-toolbar>
       <q-separator />
@@ -95,7 +99,8 @@
                 <div class="row items-start justify-between">
                   <div class="text-center col">
                     <div>Solicitud</div>
-                    <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.units.id==3? `Caja${wndCounter.item.pivot.amount!=1?'s':''}`: `Pieza${wndCounter.item.pivot.amount!=1?'s':''}` }}</div>
+                    <div class="text-bold">
+                      {{ wndCounter.item.pivot.amount }} {{ wndCounter.item.pivot._supply_by==3? `Caja${wndCounter.item.pivot.amount!=1?'s':''}`: wndCounter.item.pivot._supply_by==2? `Docena${wndCounter.item.pivot.amount!=1?'s':''}` : `Pieza${wndCounter.item.pivot.amount!=1?'s':''}` }}</div>
                   </div>
 
                   <div class="text-center col">
@@ -110,7 +115,7 @@
 
                   <div class="text-center col">
                     <div>Piezas</div>
-                    <div class="text-bold">{{ wndCounter.item.units.id==3 ? (wndCounter.form.count*wndCounter.form.ipack) : wndCounter.form.count}}</div>
+                    <div class="text-bold">{{ wndCounter.item.pivot._supply_by==3 ? (wndCounter.form.count*wndCounter.form.ipack) : wndCounter.item.pivot._supply_by==2 ? (wndCounter.form.count*12) :wndCounter.form.count}}</div>
                   </div>
                 </div>
               </q-card-section>
@@ -143,7 +148,17 @@
             <div>Quien eres?</div>
             </q-card-section>
             <q-card-section>
-              <q-select v-model="supply.val" :options="supply.opts" label="Surtidor" option-label="_suplier" option-value="_suplier_id" filled @update:model-value="setPartition" :option-disable="(i) => i._status != 3 ? true : false" />
+              <q-select v-model="supply.val" :options="supply.opts" label="Surtidor" option-label="_suplier" option-value="_suplier_id" filled @update:model-value="setPartition" :option-disable="(i) => i._status != 3 ? true : false" >
+                <template v-slot:option="scope">
+                  <q-item v-bind="scope.itemProps">
+                    <q-item-section>
+                      <q-item-label>{{ scope.opt._suplier }}</q-item-label>
+                      <q-item-label caption lines="2">{{scope.opt.status.name}}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+
+                </template>
+              </q-select>
             </q-card-section>
             <q-card-actions align="right">
               <q-btn flat label="Continuar" color="primary" v-close-popup :disable="supply.val ? false : true"  />
@@ -166,7 +181,7 @@
         <q-btn color="white" text-color="cyan-9" label="Terminar" icon="done" @click="wndNextState.state=true" v-if="counteds.length>0" no-caps/>
       </q-footer>
       <q-footer v-if="partition?._status != 3" bordered class="bg-orange-9 text-white">
-        <div class="q-pa-md text-bold text-uppercase text-center">{{partition?.status.name}}</div>
+        <div class="q-pa-md text-bold text-uppercase text-center">{{ partition?.status.name }}</div>
       </q-footer>
     </q-page-container>
 
@@ -190,6 +205,7 @@
   })
 
   const prodschecks = ref([]);
+  const order = ref([]);
   const selsupply  = ref(true);
   const supply = ref({
     val:null,
@@ -212,7 +228,7 @@
       { name:'locs', label:'Ubicacion', field: row => row.locations.length ? row.locations.map( l => l.path ).join(", ") :'--', align:"left", coldesc:"Ubicaciones en almacen general", sortable:true},
       { name:'ipack', label:'PxC', field: row => typeof row.pivot.ipack=="number" ? row.pivot.ipack:row.pieces, align:"center", coldesc:"Unidades x Embalaje" },
       { name:'request', label:'Solicitud', field: row => row.pivot.amount, align:"center", coldesc:"Embalaje solicitado" },
-      { name:'uspply', label:'Unidad', field: row => row.units.id==3? 'Cajas' :'Piezas', align:'left', coldesc:"Unidad de embalaje del producto"},
+      { name:'uspply', label:'Unidad', field: row => row.pivot._supply_by==3? 'Cajas' : row.pivot._supply_by==2? 'Docenas': 'Piezas', align:'left', coldesc:"Unidad de embalaje del producto"},
       { name:'stocks', label:'Stock (pzs)', field: row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0), sortable:true, classes:row => row.stocks.reduce((am,s) => am+(s.pivot.stock),0)<=0?'text-red text-bold':'text-bold text-primary', align:'center', coldesc:"Stock total en almacenes GENERALES (CEDIS+PAN)" },
       { name:'delivery', label:'Conteo', field: row => row.pivot.toDelivered, align:'center', coldesc:"Embalaje surtido"},
       {
@@ -268,7 +284,7 @@
     if(response.status==200){
       productsdb.value = response.data.products;
       supply.value.opts = response.data.partition
-
+      order.value = response.data
       ostate.value = response.data.status;
       from.value = response.data.from;
       $q.loading.hide()
@@ -343,11 +359,12 @@
     $q.loading.show({ message: "Terminando, espera..." });
     wndNextState.value.state = false;
 
-    let data = {id:$route.params.oid,state:4,supply: supply.value.val._suplier_id };
+    let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
     console.log(data);
     const response = await AssistApi.nextState(data);
     console.log(response);
-    partition.value._status = response.data.state
+    partition.value._status = response.data._status
+    partition.value.status.name = response.data.name
 
     if(response.status==200){ init(); }
 

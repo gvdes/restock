@@ -83,11 +83,12 @@
       let resp = response.data;
 
       order.value = resp.order;
-      console.log(order.value._workpoint_from)
+      console.log(order.value);
+      console.log(order.value.requisition._workpoint_from)
       order.value._status==8 ? wndStartCheck.value.state=true : null;
       order.value._status==7 ? wnReceiv.value.state=true : null;
       $q.loading.hide();
-      let dat =  order.value.from._client;
+      let dat =  order.value.requisition.from._client;
       console.log(dat);
       let save = await AssistApi.getCheck(dat)
       console.log(save);
@@ -105,19 +106,26 @@
 
     $q.loading.show({ message:"Espera..." });
 
-    let oid = $route.params.oid;
-    let key = $route.query.key;
-    let data = { oid, key };
+    // let oid = $route.params.oid;
+    // let key = $route.query.key;
+    // let data = { oid, key };
+    // const response = await RestockApi.checkinInit(data);
+    // console.log(response);
 
-    const response = await RestockApi.checkinInit(data);
-    console.log(response);
+    let data = {id:$route.params.oid ,state:9, suply:order.value._suplier_id};
+    const response = await AssistApi.nextState(data);
+    console.log(data);
+
+
 
     if(response.status==200){
       let dat =  {
-        supplyer:check.value.val,
-        pedido:order.value.id,
+        verified:check.value.val.id,
+        supplyer:order.value._suplier_id,
+        pedido:order.value.requisition.id,
         status:9
       }
+      console.log(dat)
       let savesupply = await AssistApi.SaveCheck(dat);
       if(savesupply.status == 200){
         init();
@@ -132,12 +140,27 @@
   const changeStatus = async() => {
     $q.loading.show({ message: "Cambiando Estado..." });
 
-    let data = {id:$route.params.oid,state:8};
-    const response = await RestockApi.nextState(data);
+    let data = {id:$route.params.oid ,state:8, suply:order.value._suplier_id};
+    const response = await AssistApi.nextState(data);
+    console.log(data);
+
+    if(response.status==200){
+      wnReceiv.value.state = false
+
+    console.log(order.value.id)
+    const response = await RestockApi.genEntry(order.value.id);
     console.log(response);
 
-    if(response.status==200){ wnReceiv.value.state = false
-      init(); }
+    if(response.status==200){
+      console.log(response.data);
+
+      if(response.data){
+        $q.notify({message:'Pedido Recibido', type:'positive'})
+
+      }else{ alert("Error 500: Ocurrio un error inesperado :("); }
+    }else{ alert(`Error ${response.status}: ${response.data}`); console.log(response.data)}
+
+ }
 
     $q.loading.hide();
   }

@@ -21,8 +21,8 @@ export default{
     let burl = `/restock/setreceived`;
     return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
   },
-  genInvoice(id){
-    let burl = `/restock/${id}/newinvoice`;
+  genInvoice(id,supply){
+    let burl = `/restock/${id}/${supply}/newinvoice`;
     return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
   },
   genEntry(id){
