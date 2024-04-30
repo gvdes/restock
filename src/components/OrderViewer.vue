@@ -384,7 +384,7 @@ const tryGenInvoice = async () => {
       console.log(response.data)
       wndQRCode.value.key = response.data.requisition.entry_key;
       console.log(wndQRCode.value.key)
-      pdf(response.data.invoice.folio)
+      pdf(response.data.invoice.folio,wndQRCode.value.key)
       let dat = {
         chofi: chof.value.val,
         supplyer: selSupply.value._suplier_id,
@@ -481,6 +481,7 @@ const pdf = async (data, qrvalue) => {
   }
   const currentDate = new Date();
   console.log(sal);
+  console.log(qrvalue)
   let dat = await AssitApi.getSalida(sal);
   console.log(dat);
   if (dat.status == 200) {
