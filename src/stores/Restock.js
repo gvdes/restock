@@ -13,7 +13,30 @@ export const useRestockStore = defineStore('restock', {
   },
   actions: {
     fillOrders(data) { this.ordersdb = data; },
+    addOrder(order) {
+      console.log(order);
+      let idx = this.ordersdb.findIndex( o => o.id==order.id);
+      (idx<0) ? this.ordersdb.unshift(order) : void 0;
+      return idx;
+    },
     fillResume(data) { this.resume = data; },
-    fillPrinters(data){ this.printers = data; }
+    fillPrinters(data){ this.printers = data; },
+    orderUpdate(data){
+      let order = data.order;
+      let basketsize = data.basketsize;
+      let _order = this.ordersdb.find( o => o.id == order.id );
+      if (_order)
+        _order.products_count = basketsize;
+    },
+    addOrUpdate(oid,data){
+      let idx = this.ordersdb.findIndex( o => o.id == oid );
+      if (idx>=0){
+        this.ordersdb[idx] = data;
+        return "u";
+      }else{
+        this.ordersdb.unshift(data);
+        return "a";
+      }
+    }
   }
 })

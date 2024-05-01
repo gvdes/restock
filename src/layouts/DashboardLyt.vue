@@ -33,11 +33,46 @@
   import { useRestockStore } from 'stores/restock';
   import { useQuasar } from 'quasar';
   import AdminDashboardComp from 'src/components/AdminDashboard.vue';
+  import { $sktRestock } from 'boot/socket';
 
   const $route = useRoute();
   const $router = useRouter();
   const $restockStore = useRestockStore();
   const $q = useQuasar();
+
+  const user_socket = {
+    profile: {
+      me: {
+        id: 1,
+        nick: 'root',
+        picture: '',
+        names: 'Restock',
+        surname_pat: 'Master',
+        surname_mat: 'Dashboard',
+        change_password: false,
+        _rol: 1
+      },
+      workpoint: {
+        id: 1,
+        name: 'CEDIS San Pablo',
+        alias: 'CEDISSAP',
+        dominio: '192.168.10.53:1619',
+        _client: 359,
+        active: 1,
+        _port: '1619'
+      }
+    },
+    workpoint: {
+      id: 1,
+      name: 'CEDIS San Pablo',
+      alias: 'CEDISSAP',
+      dominio: '192.168.10.53:1619',
+      _client: 359,
+      active: 1,
+      _port: '1619'
+    },
+    room: 'admin'
+  }
 
   const optstores = ref([
     { 'id':0, 'alias':'Todas'},
@@ -86,6 +121,14 @@
     viewstore.value = optstores.value[0];
     console.log("%cMainLayout listo!!","font-size:2em;color:orange;");
     $q.loading.hide();
+
+    $sktRestock.connect();
+    $sktRestock.emit("joinat", user_socket);
+
+    $sktRestock.on("joineddashreq", sktJoinatRes);
+    $sktRestock.on("creating", sktOrderCreate);
+    $sktRestock.on("order_update", sktOrderUpdate);
+    $sktRestock.on("order_changestate", sktOrderChangeState);
   }
 
   const reloadView = (v) => {
@@ -95,6 +138,45 @@
 
   const dispDateInit = computed(() => dateranges.value.from.format("YYYY/MM/DD")); // despliega la fecha de inicio
   const dispDateEnd = computed(() =>  dateranges.value.to.format("YYYY/MM/DD")); // despliega la fecha de fin
+
+  const sktJoinatRes = skt => {
+    console.log(
+      `%c${skt.user.me.nick} de ${skt.from.alias} se ha unido a Restock (UID: ${skt.user.me.id})`,
+      "background:#076F3E;color:#f5f6fa;border-radius:10px;padding:10px;font-size:1.1em;"
+    );
+  }
+
+  const sktOrderCreate = async skt => {
+    let order = skt.order;
+    let resp = await RestockApi.orderFresh(order.id);
+    let data = resp.data.order;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+  }
+
+  const sktOrderUpdate = skt => { $restockStore.orderUpdate(skt); }
+
+  const sktOrderChangeState = async skt => {
+    let order = skt.order;
+    let newstate = skt.state;
+    let resp = await RestockApi.orderFresh(order.id);
+    let data = resp.data.order;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+
+    if (newstate.id == 2){
+      $q.notify({
+        message:`El pedido <b>${order.id}</b> esta listo para iniciar surtido!!`,
+        color:"positive",
+        textColor:"white",
+        position:"bottom",
+        html:true,
+        timeout:5000
+      });
+    }
+  }
 
   watch(() => $route.query, () => { init(); }); // vigila cambios de la ruta
 
