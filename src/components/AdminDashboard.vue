@@ -87,9 +87,8 @@
 
     </q-table>
 
-    <q-dialog full-width v-model="orderViewer.state" :persistent="orderViewer.block" :no-esc-dismiss="orderViewer.block"
-      :no-backdrop-dismiss="orderViewer.block">
-      <OrderViewer :head="orderViewer.head" @loaded="orderViewer.block = false" @loading="orderViewer.block = true" />
+    <q-dialog full-width v-model="orderViewer.state" :persistent="orderViewer.block" :no-esc-dismiss="orderViewer.block" :no-backdrop-dismiss="orderViewer.block">
+      <OrderViewer :head="orderViewer.head" @loaded="orderViewer.block=false" @loading="orderViewer.block=true" @fresh="fresh" />
     </q-dialog>
 
     <q-dialog v-model="wndReport.state">
@@ -107,7 +106,7 @@ import { useQuasar } from 'quasar';
 import RestockApi from 'src/api/RestockApi.js';
 import { useRestockStore } from 'stores/restock';
 import OrderViewer from 'src/components/OrderViewer.vue';
-import TableReport from 'src/components/TableReport.vue'
+import TableReport from 'src/components/TableReport.vue';
 
 const $route = useRoute();
 const $router = useRouter();
@@ -126,7 +125,7 @@ const colorCellState = [
   'text-positive'
 ];
 
-const $emit = defineEmits(["reloadDashboard"]);
+const $emit = defineEmits(["reloadDashboard", "freshOrder"]);
 const table = ref({
   columns: [
     { name: 'id', label: 'Folio', field: 'id', align: "center", sortable: true },
@@ -193,5 +192,10 @@ const reloadDashboard = () => {
   wndReport.state = false;
   $emit("reload");
 }
+
+const fresh = id => {
+  console.log("Se crearon las particiones");
+  $emit("freshOrder", id);
+};
 
 </script>
