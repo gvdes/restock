@@ -20,7 +20,7 @@
     </q-header>
 
     <q-page-container>
-      <AdminDashboardComp @reload="init"/>
+      <AdminDashboardComp @reload="init" @freshOrder="freshOrder" />
     </q-page-container>
   </q-layout>
 </template>
@@ -33,46 +33,14 @@
   import { useRestockStore } from 'stores/restock';
   import { useQuasar } from 'quasar';
   import AdminDashboardComp from 'src/components/AdminDashboard.vue';
-  import { $sktRestock } from 'boot/socket';
+  import { $sktRestock, usrSkt  } from 'boot/socket';
 
   const $route = useRoute();
   const $router = useRouter();
   const $restockStore = useRestockStore();
   const $q = useQuasar();
 
-  const user_socket = {
-    profile: {
-      me: {
-        id: 1,
-        nick: 'root',
-        picture: '',
-        names: 'Restock',
-        surname_pat: 'Master',
-        surname_mat: 'Dashboard',
-        change_password: false,
-        _rol: 1
-      },
-      workpoint: {
-        id: 1,
-        name: 'CEDIS San Pablo',
-        alias: 'CEDISSAP',
-        dominio: '192.168.10.53:1619',
-        _client: 359,
-        active: 1,
-        _port: '1619'
-      }
-    },
-    workpoint: {
-      id: 1,
-      name: 'CEDIS San Pablo',
-      alias: 'CEDISSAP',
-      dominio: '192.168.10.53:1619',
-      _client: 359,
-      active: 1,
-      _port: '1619'
-    },
-    room: 'admin'
-  }
+  const user_socket = usrSkt;
 
   const optstores = ref([
     { 'id':0, 'alias':'Todas'},
@@ -129,6 +97,7 @@
     $sktRestock.on("creating", sktOrderCreate);
     $sktRestock.on("order_update", sktOrderUpdate);
     $sktRestock.on("order_changestate", sktOrderChangeState);
+    $sktRestock.on("order_refresh", sktOrderOrderFresh);
   }
 
   const reloadView = (v) => {
@@ -176,6 +145,25 @@
         timeout:5000
       });
     }
+  }
+
+  const sktOrderOrderFresh = async skt => {
+    console.log("REFRESHING BY SKT!!", skt);
+    let order = skt.order;
+    let resp = await RestockApi.orderFresh(order);
+    console.log(resp);
+    let data = resp.data.order;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+  }
+
+  const freshOrder = id => {
+    console.log("orderViewer/AdminDashboard actualizaron el pedido:", id);
+    // console.log(user_socket);
+    // let workZone = user_socket.workpoint;
+    // let profile = user_socket.profile;
+    $sktRestock.emit("order_refresh", { order: id });
   }
 
   watch(() => $route.query, () => { init(); }); // vigila cambios de la ruta

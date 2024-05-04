@@ -130,8 +130,8 @@
             <q-card-section class="row items-start">
               <q-avatar icon="warning" color="orange-14" text-color="white" />
               <div class="q-ml-md">
-                <div class="text-h6">Deseas terminar la El surtido?</div>
-                <div>EL se ira a la cola de verificacion</div>
+                <div class="text-h6">Deseas terminar el surtido?</div>
+                <div>La orden se encolara para verificacion</div>
               </div>
             </q-card-section>
             <q-card-actions align="right">
@@ -355,20 +355,20 @@
 
 
   const nextState = async () => {//cambiar status solo a la particion // tambien no se te olvide que lo puedes poner en por surtir cuando seleccionen al validador para que cuando muestren se ponga en el 3 y pueda quitarse el surtidor
+    console.log("Finalizando particion");
+    // $q.loading.show({ message: "Terminando, espera..." });
+    // wndNextState.value.state = false;
 
-    $q.loading.show({ message: "Terminando, espera..." });
-    wndNextState.value.state = false;
+    // let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
+    // console.log(data);
+    // const response = await AssistApi.nextState(data);
+    // console.log(response);
+    // partition.value._status = response.data._status
+    // partition.value.status.name = response.data.name
 
-    let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
-    console.log(data);
-    const response = await AssistApi.nextState(data);
-    console.log(response);
-    partition.value._status = response.data._status
-    partition.value.status.name = response.data.name
+    // if(response.status==200){ init(); }
 
-    if(response.status==200){ init(); }
-
-    $q.loading.hide();
+    // $q.loading.hide();
   }
 
   init();

@@ -255,7 +255,7 @@ const chof = ref({
 const selSupply = ref(null)
 
 
-const $emit = defineEmits(['loaded', 'loading']);
+const $emit = defineEmits(['loaded', 'loading', 'fresh']);
 
 const head = ref($props.head);
 const loading = ref(true);
@@ -339,6 +339,7 @@ const selsupply = () => {
 }
 
 const startSupply = async () => {
+  console.log("Iniciando surtido");
   $emit("loading"); // blockea la venta modal del padre que contiene eeste componente
   startingStep.value = true;
 
@@ -358,6 +359,7 @@ const startSupply = async () => {
     console.log(savesupply)
     if (savesupply.status == 200) {
       init();
+      $emit("fresh",head.value.id);
       viewSupply.value.state = false;
     } else {
       alert(`Error ${savesupply.status}: ${savesupply.data} 2`);
