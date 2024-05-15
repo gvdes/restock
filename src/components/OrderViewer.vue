@@ -113,7 +113,7 @@
         </q-tab-panel>
 
         <q-tab-panel name="supliers">
-          <q-table :rows="partition" row-key="id" dense flat bordered grid hide-header  >
+          <q-table :rows="partition" row-key="id" dense flat bordered grid hide-header>
             <template v-slot:item="props">
               <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4">
                 <q-card flat bordered>
@@ -144,7 +144,7 @@
                       <div class="col" v-if="props.row._status >= 7"> <q-btn color="pink" icon="qr_code"
                           @click="genQRKey(props.row.entry_key)" flat /></div>
                       <div class="col" v-if="props.row._status >= 7"> <q-btn color="pink" icon="list"
-                          @click="genPdf.pdf(props.row.invoice, props.row.entry_key,head.id)" flat /></div>
+                          @click="genPdf.pdf(props.row.invoice, props.row.entry_key, head.id)" flat /></div>
                     </div>
 
                   </q-card-section>
@@ -199,13 +199,12 @@
       </q-card-section>
       <q-card-section v-if="selSupply">
 
-        <q-select v-model="chof.val" :options="chof.filter" label="CHOFER" option-label="complete_name"
-          filled  style="width: 100%" @filter="filterCH"
-          input-debounce="0" use-input/>
+        <q-select v-model="chof.val" :options="chof.filter" label="CHOFER" option-label="complete_name" filled
+          style="width: 100%" @filter="filterCH" input-debounce="0" use-input />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Cancelar" color="primary" v-close-popup no-caps />
-        <q-btn flat label="Continuar" color="primary"  @click="tryGenInvoice" no-caps :disable="chof.val == null" />
+        <q-btn flat label="Continuar" color="primary" @click="tryGenInvoice" no-caps :disable="chof.val == null" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -252,7 +251,7 @@ const supply = ref({
 const chof = ref({
   opts: null,
   val: null,
-  filter:null
+  filter: null
 })
 
 const selSupply = ref(null)
@@ -261,6 +260,7 @@ const selSupply = ref(null)
 const $emit = defineEmits(['loaded', 'loading', 'fresh']);
 
 const head = ref($props.head);
+const order = ref(null);
 const loading = ref(true);
 const log = ref([]);
 const tab = ref("supliers");
@@ -326,6 +326,7 @@ const init = async () => {
   log.value = response.data.log.map(l => { l.pivot.details = JSON.parse(l.pivot.details); return l; });
   partition.value = response.data.partition
   cstate.value = response.data.status;
+  order.value = response.data
   // wndQRCode.value.key = response.data.entry_key;
   invoice.value = response.data.invoice;
   if (cstate.value.id == 2) {
@@ -362,7 +363,7 @@ const startSupply = async () => {
     console.log(savesupply)
     if (savesupply.status == 200) {
       init();
-      $emit("fresh",head.value.id);
+      $emit("fresh", head.value.id);
       viewSupply.value.state = false;
     } else {
       alert(`Error ${savesupply.status}: ${savesupply.data} 2`);
@@ -375,33 +376,39 @@ const startSupply = async () => {
 
 const tryGenInvoice = async () => {
   $q.loading.show({ message: "Cambiando, espera..." });
-      let dat = {
-        chofi: chof.value.val,
-        supplyer: selSupply.value._suplier_id,
-        pedido: head.value.id,
-        status: 7
-      }
-      let savesupply = await AssitApi.SaveChofi(dat);
+  let dat = {
+    chofi: chof.value.val,
+    supplyer: selSupply.value._suplier_id,
+    pedido: head.value.id,
+    status: 7
+  }
+  let savesupply = await AssitApi.SaveChofi(dat);
 
-      if (savesupply.status == 200) {
-        let data = { id: head.value.id, state: 7, suply: selSupply.value._suplier_id }
-        console.log(data);
-        let resp = await AssitApi.nextState(data)
-        console.log(resp)
-        if (resp.status == 200) {
-          init();
-          let id = resp.data.id
-          let inx = partition.value.findIndex(e => e.id == id)
-          partition.value[inx]._status = resp.data._status
-          partition.value[inx].invoice = resp.data.invoice
-        }
+  if (savesupply.status == 200) {
+    let data = { id: head.value.id, state: 7, suply: selSupply.value._suplier_id }
+    console.log(data);
+    let resp = await AssitApi.nextState(data)
+    console.log(resp)
+    if (resp.data.partitionsEnd > order.value._status) {
+      let nes = { id: head.value.id, state: resp.data.partitionsEnd };
+      console.log(nes)
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
+    }
+    if (resp.status == 200) {
+      init();
+      let id = resp.data.partition.id
+      let inx = partition.value.findIndex(e => e.id == id)
+      partition.value[inx]._status = resp.data.partition._status
+      partition.value[inx].invoice = resp.data.partition.invoice
+    }
 
-        $q.notify({
-          message: `Pedido en ruta`,
-          position: "center", icon: "done", timeout: 5000, color: "positive"
-        });
-        wndGenInvoice.value.state = false
-      } else { alert(`Error ${savesupply.status}: ${savesupply.data}`); }
+    $q.notify({
+      message: `Pedido en ruta`,
+      position: "center", icon: "done", timeout: 5000, color: "positive"
+    });
+    wndGenInvoice.value.state = false
+  } else { alert(`Error ${savesupply.status}: ${savesupply.data}`); }
 
   $q.loading.hide();
 }

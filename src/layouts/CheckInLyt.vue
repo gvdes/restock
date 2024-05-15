@@ -59,6 +59,7 @@
   const wndStartCheck = ref({ state:false });
   const wnReceiv = ref({ state:false });
   const order = ref(null);
+  const requisition = ref(null);
   const check = ref({
     val:null,
     opts:null
@@ -83,8 +84,7 @@
       let resp = response.data;
 
       order.value = resp.order;
-      console.log(order.value);
-      console.log(order.value.requisition._workpoint_from)
+      requisition.value = resp.order.requisition
       order.value._status==8 ? wndStartCheck.value.state=true : null;
       order.value._status==7 ? wnReceiv.value.state=true : null;
       $q.loading.hide();
@@ -115,9 +115,6 @@
     let data = {id:$route.params.oid ,state:9, suply:order.value._suplier_id};
     const response = await AssistApi.nextState(data);
     console.log(data);
-
-
-
     if(response.status==200){
       let dat =  {
         verified:check.value.val.id,
@@ -126,6 +123,11 @@
         status:9
       }
       console.log(dat)
+      if (response.data.partitionsEnd > requisition.value._status) {
+      let nes = { id: $route.params.oid, state: response.data.partitionsEnd };
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
+    }
       let savesupply = await AssistApi.SaveCheck(dat);
       if(savesupply.status == 200){
         init();
@@ -142,8 +144,12 @@
 
     let data = {id:$route.params.oid ,state:8, suply:order.value._suplier_id};
     const response = await AssistApi.nextState(data);
-    console.log(data);
-
+    console.log(response);
+    if (response.data.partitionsEnd > requisition.value._status) {
+      let nes = { id: $route.params.oid, state: response.data.partitionsEnd };
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
+    }
     if(response.status==200){
       wnReceiv.value.state = false
       let ms  = {id:order.value.invoice, suply:order.value._suplier, store:order.value.requisition.from.name};

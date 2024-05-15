@@ -449,10 +449,16 @@ const nextState = async () => {
   console.log(data);
   let resp = await AssitApi.nextState(data)
   if (resp.status == 200) {
-    partition.value._status = resp.data._status
-    partition.value.status.name = resp.data.name
+    partition.value._status = resp.data.partition._status
+    partition.value.status.name = resp.data.partition.name
     const response = await RestockApi.genInvoice($route.params.oid, partition.value._suplier_id);
     console.log(response);
+
+    if(resp.data.partitionsEnd > order.value._status){
+      let nes = {id:$route.params.oid,state:resp.data.partitionsEnd};
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
+    }
 
     if (response.status == 200) {
 
@@ -500,9 +506,14 @@ const changeStatus = async () => {
   console.log(data);
   let resp = await AssitApi.nextState(data)
   if (resp.status == 200) {
-    partition.value._status = resp.data._status
-    partition.value.status.name = resp.data.name
+    partition.value._status = resp.data.partition._status
+    partition.value.status.name = resp.data.partition.name
     console.log(resp)
+    if(resp.data.partitionsEnd > order.value._status){
+      let nes = {id:$route.params.oid,state:resp.data.partitionsEnd};
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
+    }
   } else {
     console.log(resp)
   }
