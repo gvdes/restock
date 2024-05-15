@@ -146,19 +146,8 @@
 
     if(response.status==200){
       wnReceiv.value.state = false
-
-    console.log(order.value.id)
-    const response = await RestockApi.genEntry(order.value.id);
-    console.log(response);
-
-    if(response.status==200){
-      console.log(response.data);
-
-      if(response.data){
-        $q.notify({message:'Pedido Recibido', type:'positive'})
-
-      }else{ alert("Error 500: Ocurrio un error inesperado :("); }
-    }else{ alert(`Error ${response.status}: ${response.data}`); console.log(response.data)}
+      let ms  = {id:order.value.invoice, suply:order.value._suplier, store:order.value.requisition.from.name};
+    const envmes  = await AssistApi.sendMessage(ms);
 
  }
 

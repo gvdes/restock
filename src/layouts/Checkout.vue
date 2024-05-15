@@ -30,8 +30,8 @@
       </div>
     </q-header>
 
-    <q-dialog v-if="partition && partition._status == 5 && partition._out_verified == null" v-model="wndStartCheck.state"
-      persistent>
+    <q-dialog v-if="partition && partition._status == 5 && partition._out_verified == null"
+      v-model="wndStartCheck.state" persistent>
       <q-card>
         <q-card-section class="row items-center">
           <q-avatar icon="warning" color="orange-14" text-color="white" />
@@ -153,7 +153,7 @@
                     <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.pivot._supply_by == 3 ?
                       `Caja${wndCounter.item.pivot.amount != 1 ? 's' : ''}` : wndCounter.item.pivot._supply_by == 2 ?
                         `Docena${wndCounter.item.pivot.amount != 1 ? 's' : ''}` :
-                      `Pieza${wndCounter.item.pivot.amount!=1?'s':''}` }}
+                        `Pieza${wndCounter.item.pivot.amount != 1 ? 's' : ''}` }}
                     </div>
                   </div>
 
@@ -174,7 +174,7 @@
                     <div>Piezas</div>
                     <div class="text-bold">{{ wndCounter.item.pivot._supply_by == 3 ?
                       (wndCounter.form.count * wndCounter.form.ipack) : wndCounter.item.pivot._supply_by == 2 ?
-                        (wndCounter.form.count*12) :wndCounter.form.count}}</div>
+                        (wndCounter.form.count * 12) : wndCounter.form.count }}</div>
                   </div>
                 </div>
               </q-card-section>
@@ -184,18 +184,25 @@
           </q-card>
         </q-dialog>
 
+        <!-- ESTA VENTANA PARA TERMINAR EL CHECKOUT -->
+
         <q-dialog v-model="wndNextState.state">
           <q-card>
             <q-card-section class="row items-start">
               <q-avatar icon="warning" color="orange-14" text-color="white" />
+
               <div class="q-ml-md">
-                <div class="text-h6">Deseas terminar la revision?</div>
-                <div>EL pedido ya no podra editarse</div>
+                <div class="text-h6 text-bold">Deseas terminar la revision?</div>
+
               </div>
             </q-card-section>
+            <q-card-section class="text-subtitle1 text-bold">
+              <div>EL pedido ya no podra editarse y se emitira la salida correspondiente</div>
+              <div>en factusol</div>
+            </q-card-section>
             <q-card-actions align="right">
-              <q-btn flat label="No" color="primary" v-close-popup no-caps />
-              <q-btn flat label="Si" color="primary" @click="nextState" />
+              <q-btn flat label="Canclear" color="negative" rounded v-close-popup no-caps />
+              <q-btn flat label="Emitir Factura" color="positive" rounded @click="nextState" />
             </q-card-actions>
           </q-card>
         </q-dialog>
@@ -238,7 +245,6 @@
           </q-card>
         </q-dialog>
 
-
       </q-page>
 
       <q-footer bordered class="bg-cyan-10 text-dark q-pa-sm row" elevated v-if="enabledEditor">
@@ -268,6 +274,8 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import dayjs from 'dayjs';
 import RestockApi from 'src/api/RestockApi.js';
+import pdf from 'src/api/pdfCreate.js';
+
 import AssitApi from 'src/api/AssistApi.js';
 import { useQuasar } from 'quasar';
 
@@ -275,6 +283,8 @@ const $route = useRoute();
 const $router = useRouter();
 const $q = useQuasar();
 
+const wndGenInvoice = ref({ state: false });
+const wndQRCode = ref({ state: false, key: null });
 const wndStartCheck = ref({ state: true })
 const selsupply = ref(true);
 const supplier = ref({
@@ -318,7 +328,7 @@ const table = ref({
   pagination: {
     sortBy: 'locs',
     descending: false,
-    rowsPerPage: 20
+    rowsPerPage: 10
   }
 });
 const wndCounter = ref({
@@ -432,6 +442,7 @@ const setDeliveryProduct = async () => {
 
 const nextState = async () => {
   $q.loading.show({ message: "Terminando, espera..." });
+
   wndNextState.value.state = false;
 
   let data = { id: $route.params.oid, state: 6, suply: supplier.value.val._suplier_id }
@@ -440,6 +451,40 @@ const nextState = async () => {
   if (resp.status == 200) {
     partition.value._status = resp.data._status
     partition.value.status.name = resp.data.name
+    const response = await RestockApi.genInvoice($route.params.oid, partition.value._suplier_id);
+    console.log(response);
+
+    if (response.status == 200) {
+
+      if (response.data.invoice) {
+        $q.notify({
+          message: `Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
+          html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
+        });
+        wndQRCode.value.key = response.data.requisition.entry_key;
+        pdf.pdf(response.data.invoice.folio, wndQRCode.value.key, $route.params.oid)
+
+        console.log(partition.value.id)
+        const entry = await RestockApi.genEntry(partition.value.id);
+        console.log(entry);
+
+        if (entry.status == 200) {
+          console.log(entry.data);
+
+          if (entry.data) {
+            $q.notify({
+          message: `Se genero la Entrada <b class="text-h6">${entry.data.invoice.folio}</b>`,
+          html: true, position: "center", icon: "done", timeout: 5000, color: "orange"
+        });
+
+          } else { alert("Error 500: Ocurrio un error inesperado :("); }
+        } else { alert(`Error ${response.status}: ${response.data}`); console.log(response.data) }
+      }
+
+
+
+    } else { alert(`Error ${response.status}: ${response.data}`); }
+
 
     console.log(resp)
   } else {
@@ -462,6 +507,8 @@ const changeStatus = async () => {
     console.log(resp)
   }
 }
+
+
 
 
 const startCheckin = async () => {
