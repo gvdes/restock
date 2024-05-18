@@ -356,19 +356,25 @@
 
   const nextState = async () => {//cambiar status solo a la particion // tambien no se te olvide que lo puedes poner en por surtir cuando seleccionen al validador para que cuando muestren se ponga en el 3 y pueda quitarse el surtidor
     console.log("Finalizando particion");
-    // $q.loading.show({ message: "Terminando, espera..." });
-    // wndNextState.value.state = false;
+    $q.loading.show({ message: "Terminando, espera..." });
+    wndNextState.value.state = false;
 
-    // let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
-    // console.log(data);
-    // const response = await SAssistApi.nextSState(data);
-    // console.log(response);
-    // partition.value._status = response.data._status
-    // partition.value.status.name = response.data.name
+    let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
+    console.log(data);
+    const response = await AssistApi.nextState(data);
+    console.log(response);
+    partition.value._status = response.data.partition._status
+    partition.value.status.name = response.data.partition.name
+    if(response.data.partitionsEnd > order.value._status){
+      let nes = {id:$route.params.oid,state:response.data.partitionsEnd};
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
 
-    // if(response.status==200){ init(); }
+    }
 
-    // $q.loading.hide();
+    if(response.status==200){ init(); }
+
+    $q.loading.hide();
   }
 
   init();

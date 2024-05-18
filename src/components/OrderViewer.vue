@@ -113,7 +113,7 @@
         </q-tab-panel>
 
         <q-tab-panel name="supliers">
-          <q-table :rows="partition" row-key="id" dense flat bordered grid hide-header  >
+          <q-table :rows="partition" row-key="id" dense flat bordered grid hide-header>
             <template v-slot:item="props">
               <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4">
                 <q-card flat bordered>
@@ -138,13 +138,13 @@
                     <div>{{ props.row.invoice }}</div>
                     <div>{{ props.row.invoice_received }}</div>
                     <div class="row">
-                      <div class="col" v-if="props.row._status == 6"> <q-btn color="pink" label="Emitir Factura"
+                      <div class="col" v-if="props.row._status == 6"> <q-btn color="pink" label="En Camino"
                           class="q-px-xl q-py-xs" size="10px" padding="5px 2px" icon-right="start" flat
                           @click="genvoice(props.row)" /> </div>
                       <div class="col" v-if="props.row._status >= 7"> <q-btn color="pink" icon="qr_code"
                           @click="genQRKey(props.row.entry_key)" flat /></div>
                       <div class="col" v-if="props.row._status >= 7"> <q-btn color="pink" icon="list"
-                          @click="pdf(props.row.invoice, props.row.entry_key)" flat /></div>
+                          @click="genPdf.pdf(props.row.invoice, props.row.entry_key, head.id)" flat /></div>
                     </div>
 
                   </q-card-section>
@@ -187,8 +187,8 @@
       <q-card-section class="row items-start">
         <q-avatar icon="warning" color="orange-14" text-color="white" />
         <div class="q-ml-md">
-          <div class="text-h6">Emitir salida?</div>
-          <div>La salida emitira la factura correspondiente en Factusol.</div>
+          <div class="text-h6">Cambiar a En Camino?</div>
+          <div>Cambiara a estatus en camino</div>
         </div>
       </q-card-section>
       <q-card-section>
@@ -198,7 +198,9 @@
         </div>
       </q-card-section>
       <q-card-section v-if="selSupply">
-        <q-select v-model="chof.val" :options="chof.opts" label="Chofer" filled option-label="complete_name" />
+
+        <q-select v-model="chof.val" :options="chof.filter" label="CHOFER" option-label="complete_name" filled
+          style="width: 100%" @filter="filterCH" input-debounce="0" use-input />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn flat label="Cancelar" color="primary" v-close-popup no-caps />
@@ -231,9 +233,8 @@ import { useRoute, useRouter } from 'vue-router';
 import dayjs from 'dayjs';
 import { useQuasar } from 'quasar';
 import QRCode from 'qrcode';
-import { jsPDF } from "jspdf";
-import autoTable from 'jspdf-autotable'
 import PrinterSelect from 'src/components/PrinterSelect.vue';
+import genPdf from 'src/api/pdfCreate.js';
 
 const $q = useQuasar();
 const $route = useRoute();
@@ -249,7 +250,8 @@ const supply = ref({
 })
 const chof = ref({
   opts: null,
-  val: null
+  val: null,
+  filter: null
 })
 
 const selSupply = ref(null)
@@ -258,6 +260,7 @@ const selSupply = ref(null)
 const $emit = defineEmits(['loaded', 'loading', 'fresh']);
 
 const head = ref($props.head);
+const order = ref(null);
 const loading = ref(true);
 const log = ref([]);
 const tab = ref("supliers");
@@ -323,6 +326,7 @@ const init = async () => {
   log.value = response.data.log.map(l => { l.pivot.details = JSON.parse(l.pivot.details); return l; });
   partition.value = response.data.partition
   cstate.value = response.data.status;
+  order.value = response.data
   // wndQRCode.value.key = response.data.entry_key;
   invoice.value = response.data.invoice;
   if (cstate.value.id == 2) {
@@ -359,7 +363,7 @@ const startSupply = async () => {
     console.log(savesupply)
     if (savesupply.status == 200) {
       init();
-      $emit("fresh",head.value.id);
+      $emit("fresh", head.value.id);
       viewSupply.value.state = false;
     } else {
       alert(`Error ${savesupply.status}: ${savesupply.data} 2`);
@@ -371,51 +375,40 @@ const startSupply = async () => {
 }
 
 const tryGenInvoice = async () => {
-  $q.loading.show({ message: "Generando, espera..." });
-  wndGenInvoice.value.state = false;
-  console.log(selSupply.value._suplier_id);
-  const response = await RestockApi.genInvoice(head.value.id, selSupply.value._suplier_id);
-  // console.log(response);
+  $q.loading.show({ message: "Cambiando, espera..." });
+  let dat = {
+    chofi: chof.value.val,
+    supplyer: selSupply.value._suplier_id,
+    pedido: head.value.id,
+    status: 7
+  }
+  let savesupply = await AssitApi.SaveChofi(dat);
 
-  if (response.status == 200) {
-    if (response.data.invoice) {
-      $q.notify({
-        message: `Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
-        html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
-      });
-      console.log(response.data)
-      wndQRCode.value.key = response.data.requisition.entry_key;
-      console.log(wndQRCode.value.key)
-      pdf(response.data.invoice.folio,wndQRCode.value.key)
-      let dat = {
-        chofi: chof.value.val,
-        supplyer: selSupply.value._suplier_id,
-        pedido: head.value.id,
-        status: 7
-      }
-      let savesupply = await AssitApi.SaveChofi(dat);
-
-      if (savesupply.status == 200) {
-        let data = { id: head.value.id, state: 7, suply: selSupply.value._suplier_id }
-        console.log(data);
-        let resp = await AssitApi.nextState(data)
-        console.log(resp)
-        if (resp.status == 200) {
-          init();
-          let id = resp.data.id
-          let inx = partition.value.findIndex(e => e.id == id)
-          partition.value[inx]._status = resp.data._status
-          partition.value[inx].invoice = resp.data.invoice
-        }
-
-        $q.notify({
-          message: `Pedido en ruta`,
-          position: "center", icon: "done", timeout: 5000, color: "positive"
-        });
-      } else { alert(`Error ${savesupply.status}: ${savesupply.data}`); }
-
+  if (savesupply.status == 200) {
+    let data = { id: head.value.id, state: 7, suply: selSupply.value._suplier_id }
+    console.log(data);
+    let resp = await AssitApi.nextState(data)
+    console.log(resp)
+    if (resp.data.partitionsEnd > order.value._status) {
+      let nes = { id: head.value.id, state: resp.data.partitionsEnd };
+      console.log(nes)
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
     }
-  } else { alert(`Error ${response.status}: ${response.data}`); }
+    if (resp.status == 200) {
+      init();
+      let id = resp.data.partition.id
+      let inx = partition.value.findIndex(e => e.id == id)
+      partition.value[inx]._status = resp.data.partition._status
+      partition.value[inx].invoice = resp.data.partition.invoice
+    }
+
+    $q.notify({
+      message: `Pedido en ruta`,
+      position: "center", icon: "done", timeout: 5000, color: "positive"
+    });
+    wndGenInvoice.value.state = false
+  } else { alert(`Error ${savesupply.status}: ${savesupply.data}`); }
 
   $q.loading.hide();
 }
@@ -458,9 +451,9 @@ const printForSupply = async data => {
 const genvoice = async (row) => {
   selSupply.value = row
   wndGenInvoice.value.state = true
-  let ch = await AssitApi.getChof();
+  let ch = await AssitApi.getSupply();
   console.log(ch);
-  chof.value.opts = ch.data
+  chof.value.opts = ch
 }
 
 const filterFn = (val, update, abort) => {
@@ -475,164 +468,16 @@ const filterFn = (val, update, abort) => {
   })
 }
 
-
-const pdf = async (data, qrvalue) => {
-  // console.log(data.folio);
-  let sal = {
-    salida: data
-  }
-  const currentDate = new Date();
-  console.log(sal);
-  console.log(qrvalue)
-  let dat = await AssitApi.getSalida(sal);
-  console.log(dat);
-  if (dat.status == 200) {
-    const qrData = `http://192.168.10.189:2200/#/checkin/${head.value.id}?key=${qrvalue}`;
-    // const qrData = `http://192.168.10.112:9000/#/checkin/${head.value.id}?key=${qrvalue}`;
-
-    const qrOptions = {
-      margin: 1,
-      width: 1,
-      height: 1
+const filterCH = (val, update, abort) => {
+  update(() => {
+    if (val === '') {
+      chof.value.filter = chof.value.opts
+    } else {
+      const needle = val.toLowerCase()
+      chof.value.filter = chof.value.opts.filter(v => v.complete_name.toLowerCase().indexOf(needle) > -1)
     }
-    const canvas = document.createElement('canvas');
-    await QRCode.toCanvas(canvas, qrData, qrOptions);
-    const imgData = canvas.toDataURL('image/png');
-    const doc = new jsPDF();
-    let chunks = [];
-    const arreglo = dat.data.productos.map(producto => Object.values(producto));
-    const paginas = Math.ceil(arreglo.length / 20);
-    for (var i = 0; i < arreglo.length; i += 20) {
 
-      // console.log(arreglo[i])
-
-      chunks.push(arreglo.slice(i, i + 20));
-    }
-    console.log(chunks);
-    for (let i = 0; i < 2; i++) {
-      let copias = 'ORIGINAL'
-      if (i > 0) {
-        copias = 'COPIA'
-        doc.addPage();
-      }
-      chunks.forEach(function (chunk, index) {
-        if (index > 0) {
-          doc.addPage();
-        }
-
-        let sumaBullfa = 0;
-        let totcan = 0;
-        for (let i = 0; i < chunk.length; i++) {
-          chunk[i][1] = chunk[i][1] == 0 ? 1 : parseFloat(chunk[i][1]);
-          chunk[i][2] = parseFloat(chunk[i][2]);
-          chunk[i][3] = parseFloat(chunk[i][3]);
-          sumaBullfa += parseFloat(chunk[i][1]); // Sumar al total la propiedad 'BULLFA' convertida a número
-          totcan += parseFloat(chunk[i][3]);
-        }
-
-
-        for (let i = 0; i < chunk.length; i++) {
-          // Sumar al total la propiedad 'BULLFA' convertida a número
-        }
-
-        doc.setFontSize(25)
-        doc.setFont('helvetica', 'bold')
-        doc.text("GRUPO VIZCARRA", 105, 10, "center");
-        doc.setFontSize(8)
-        doc.text('NUMERO PEDIDO:', 10, 10, 'left')
-        doc.text(dat.data.salida.FOLIO, 10, 15, 'left');
-        doc.setFontSize(12)
-        doc.text(copias, 185, 10, 'left');
-        doc.text(dat.data.salida.CLIENTE, 10, 25, 'left')
-        doc.text('LLUVIA LIGTH SA DE CV', 120, 25, 'left')
-        doc.setFontSize(8)
-        doc.text('CALLE AN PABLO 10 LOC G 10', 120, 30, 'left')
-        doc.text('06090', 120, 35, 'left')
-        doc.text('DELEG, CUAUHTEMOC CDMX       CENTRO', 120, 40, 'left')
-        doc.text('LLI1210184G8', 120, 45, 'left')
-        doc.text('HORA DE IMP:', 10, 50, 'left')
-        doc.rect(45, 46, 15, 5);
-        doc.text(dayjs(currentDate).format("HH:mm:ss"), 47, 50)
-        doc.text('HR SALIDA M:', 61, 50, 'left')
-        doc.rect(91, 46, 15, 5);
-        doc.text('LLEGADA A SUCURSAL:', 10, 60, 'left')
-        doc.rect(45, 56, 15, 5);
-        doc.text('SALIDA SUCURSAL:', 61, 60, 'left')
-        doc.rect(91, 56, 15, 5);
-        doc.rect(120, 51, 80, 5);
-        doc.text('DOCUMENTO', 121, 55, 'left')
-        doc.text('FACTURA', 121, 60, 'left')
-        doc.text('NUMERO', 143, 55, 'left')
-        doc.text(dat.data.salida.FACTURA, 143, 60, 'left')
-        doc.text('PAGINA', 165, 55, 'left')
-        doc.text(`${index + 1} de ${paginas}`, 165, 60, 'left')
-        doc.text('FECHA', 185, 55, 'left')
-        const fecha = dayjs(dat.data.salida.FECHA).format("YYYY-MM-DD")
-        doc.text(fecha, 185, 60, 'left')
-        autoTable(doc, {
-          startX: 10,
-          startY: 65,
-          theme: 'plain',
-          styles: { cellPadding: 1, fontSize: 8, halign: 'center' },
-          head: [['CREADOR DOC', 'ALMACEN', 'AGENTE', 'FORMA DE PAGO']],
-          body: [
-            ['APP', dat.data.salida.AMACEN, dat.data.salida.AGENTE, dat.data.salida.FPAGO],
-          ],
-        })
-
-        autoTable(doc, {
-          startX: 10,
-          startY: 80,
-          theme: 'striped',
-          styles: { cellPadding: .6, fontSize: 8, halign: 'center' },
-          head: [['ARTICULO', 'CAJAS', 'U.X CAJA', 'CANTIDAD', 'DESCRIPCION']],
-          body: chunk,
-          columnStyles: {
-            0: { fontStyle: 'bold', halign: 'left' },
-            1: { fontStyle: 'bold', halign: 'center' },
-            4: { halign: 'left' },
-          },
-
-        })
-
-        doc.setFontSize(11)
-        doc.text('TOTAL CAJAS:', 10, 200, 'left')
-        doc.text(sumaBullfa.toString(), 40, 200, 'left')
-        doc.text('TOTAL UNIDDADES:', 60, 200, 'left')
-        doc.text(totcan.toString(), 100, 200, 'left')
-        doc.setFontSize(8)
-        doc.text('Debo(emos) y pagare(mos) incondicionalmente por este pagare a la order de GRUPO VIZCARRA, en la ciudad de Mexico,', 10, 210, 'left')
-        doc.text('la cantidad de el valor recibido a mi(nuestra) entera satisfaccion', 10, 215, 'left')
-        doc.text('Este pagare forma parte de una serie numerica del 1 al y 9 y todos estos estan sujetos a la condicion, de que al no pagarse cualquiera de ellos a su', 10, 220, 'left')
-        doc.text('vencimiento sean exigibles todos los que le sigan en numero, ademas de los ya vencidosm desde la fecha de su vencimiento de el presente documento', 10, 225, 'left')
-        doc.text('hasta el dia de su liquidacion, causaran intereses moratorios al tipo del % mensual en esta ciudad justamente con el principal', 10, 230, 'left')
-        doc.setFontSize(15)
-        doc.text('______________', 31, 248, 'center')
-        doc.text('AUTORIZO', 20, 254, 'left')
-        doc.text('______________', 85, 248, 'center')
-        doc.text('CHOFER', 75, 254, 'left')
-        doc.text('______________', 140, 248, 'center')
-        doc.text('RECIBIO', 130, 254, 'left')
-        doc.text('______________', 168, 248, 'left')
-        doc.text('FECHA Y HORA', 168, 254, 'left')
-        doc.setFontSize(9)
-        doc.text('UNA VEZ ENTREGADA LA MERCANCIA EN LA FLETERA O DOMICILIO QUE INDIQUE EL CLIENTE ', 10, 260, 'left')
-        doc.text('LLUVIA LIGHT SA DE CV NO ES RESPONSABLE POR PEDIDAS TOTALES, PARCIALES ', 10, 265, 'left')
-        doc.text('O CUALQUIER TIPO DE DANO EN LA MERCANCIA DE ESTE DOCUMENTO ', 10, 270, 'left')
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(12)
-        doc.text('NO SE ACEPTAN CAMBIOS NI DEVOLUCIONES', 10, 280, 'left')
-        doc.setFontSize(25)
-        doc.setFont('helvetica', 'bold')
-        doc.text("GRUPO VIZCARRA", 105, 10, "center");
-        doc.addImage(imgData, 'PNG', 95, 25, 20, 20);
-      })
-    }
-    doc.save(dat.data.salida.FACTURA)
-
-  } else {
-    console.error('No se logro imprimir la factura');
-  }
+  })
 }
 
 onBeforeMount(() => viewcols.value = table.value.columns.map(c => c.name));

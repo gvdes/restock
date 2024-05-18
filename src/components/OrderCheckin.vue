@@ -173,7 +173,6 @@ const $route = useRoute();
 const props = defineProps({ order: { type: Object, default: {} } });
 const $emit = defineEmits(["reload"]);
 const order = ref(props.order);
-
 const wndNextState = ref({ state: false });
 const finder = ref("");
 const iptfinder = ref(null);
@@ -300,6 +299,12 @@ const tryGenEntry = async () => {
   console.log(data);
   let resp = await AssitApi.nextState(data)
   if (resp.status == 200) {
+    if (resp.data.partitionsEnd > order.value.requisition._status) {
+      let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
+      console.log(nes)
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
+    }
     $q.notify({
     message: `Se genero la entrada`,
     html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
