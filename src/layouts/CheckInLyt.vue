@@ -152,8 +152,9 @@
     }
     if(response.status==200){
       wnReceiv.value.state = false
-      let ms  = {id:order.value.invoice, suply:order.value._suplier, store:order.value.requisition.from.name};
+      let ms  = {id:order.value.invoice, suply:order.value._driver, store:order.value.requisition.from.name};
     const envmes  = await AssistApi.sendMessage(ms);
+    console.log(envmes);
 
  }
 
