@@ -361,7 +361,7 @@
 
     // let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
     // console.log(data);
-    // const response = await AssistApi.nextState(data);
+    // const response = await SAssistApi.nextSState(data);
     // console.log(response);
     // partition.value._status = response.data._status
     // partition.value.status.name = response.data.name

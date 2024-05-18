@@ -104,8 +104,8 @@
   }
 
   const sktOrderCreate = async skt => {
-    console.log("Nuevo pedido iniciado");
     let order = skt.order;
+    console.log(`El pedido ${order.id} ha sido iniciado!`);
     let resp = await RestockApi.orderFresh(order.id);
     let data = resp.data.order;
     let oid = resp.data.oid;
@@ -117,8 +117,10 @@
 
   const sktOrderChangeState = async skt => {
     let order = skt.order;
+    console.log(`Refrescando orden ${order.id}`);
     let newstate = skt.state;
     let resp = await RestockApi.orderFresh(order.id);
+    console.log(resp.data);
     let data = resp.data.order;
     let oid = resp.data.oid;
 
@@ -142,9 +144,21 @@
     let resp = await RestockApi.orderFresh(order);
     console.log(resp);
     let data = resp.data.order;
+    console.log(data);
     let oid = resp.data.oid;
 
     let cmd = $restockStore.addOrUpdate(oid,data);
+
+    if (data._status == 3){
+      $q.notify({
+        message:`El pedido <b>${data.id}</b> esta listo para surtir!!`,
+        color:"positive",
+        textColor:"white",
+        position:"bottom",
+        html:true,
+        timeout:5000
+      });
+    }
   }
 
   watch(() => $route.query, () => { init(); }); // vigila cambios de la ruta

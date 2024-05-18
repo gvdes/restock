@@ -9,7 +9,7 @@
     >
       <template v-slot:top>
         <div class="full-width row items-center">
-          <div class="col text-h6 text-dark">Pedidos: {{ordersSize}}</div>
+          <div class="col text-h6 text-dark">Pedidos: {{ordersdb.length}}</div>
           <q-input dense v-model="table.filter" input-class="text-uppercase" placeholder="Buscar" color="pink-5">
             <template v-slot:append>
               <q-icon name="search" />
@@ -62,8 +62,8 @@
 
   const open = (q,row,c) => $router.push(`/checkout/${row.id}`);
 
-  const ordersSize = computed(() => $restockStore.ordersSize);
-  const ordersdb = computed(() => $restockStore.ordersdb);
+  // const ordersSize = computed(() => $restockStore.ordersSize);
+  const ordersdb = computed(() => $restockStore.ordersdb.filter(o => o._status > 2));
 
   const setOrderViewer = async (evt, row, idx) => {
     orderViewer.value.head=row;
