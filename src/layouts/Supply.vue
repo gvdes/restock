@@ -378,9 +378,8 @@
       let nes = {id:$route.params.oid,state:response.data.partitionsEnd};
       const nxt = await RestockApi.nextState(nes);
       console.log(nxt);
-
-      $sktRestock.emit("orderpartition_refresh", { order: _id });
     }
+    $sktRestock.emit("orderpartition_refresh", { order: _id });
 
     if(response.status==200){
       init();
