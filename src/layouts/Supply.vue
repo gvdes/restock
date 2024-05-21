@@ -195,10 +195,13 @@
   import RestockApi from 'src/api/RestockApi.js';
   import AssistApi from 'src/api/AssistApi.js';
   import { useQuasar } from 'quasar';
+  import { $sktRestock, usrSkt } from 'boot/socket';
 
   const $route = useRoute();
   const $router = useRouter();
   const $q = useQuasar();
+
+  const user_socket = usrSkt;
 
   const wndNextState = ref({
     state:false
@@ -280,6 +283,8 @@
     console.log("Iniciando...");
     const response = await RestockApi.order($route.params.oid);
     console.log(response);
+    $sktRestock.connect();
+    $sktRestock.emit("joinat", user_socket);
 
     if(response.status==200){
       productsdb.value = response.data.products;
@@ -356,25 +361,32 @@
 
   const nextState = async () => {//cambiar status solo a la particion // tambien no se te olvide que lo puedes poner en por surtir cuando seleccionen al validador para que cuando muestren se ponga en el 3 y pueda quitarse el surtidor
     console.log("Finalizando particion");
+    console.log(order.value.id);
+
+    let _id = order.value.id;
+
     $q.loading.show({ message: "Terminando, espera..." });
     wndNextState.value.state = false;
 
     let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
     console.log(data);
-    // const response = await AssistApi.nextState(data);
-    // console.log(response);
-    // partition.value._status = response.data.partition._status
-    // partition.value.status.name = response.data.partition.name
-    // if(response.data.partitionsEnd > order.value._status){
-    //   let nes = {id:$route.params.oid,state:response.data.partitionsEnd};
-    //   const nxt = await RestockApi.nextState(nes);
-    //   console.log(nxt);
+    const response = await AssistApi.nextState(data);
+    console.log(response);
+    partition.value._status = response.data.partition._status
+    partition.value.status.name = response.data.partition.name
+    if(response.data.partitionsEnd > order.value._status){
+      let nes = {id:$route.params.oid,state:response.data.partitionsEnd};
+      const nxt = await RestockApi.nextState(nes);
+      console.log(nxt);
 
-    // }
+      $sktRestock.emit("orderpartition_refresh", { order: _id });
+    }
 
-    // if(response.status==200){ init(); }
+    if(response.status==200){
+      init();
+    }
 
-    // $q.loading.hide();
+    $q.loading.hide();
   }
 
   init();

@@ -89,7 +89,7 @@
     $sktRestock.on("order_update", sktOrderUpdate);
     $sktRestock.on("order_changestate", sktOrderChangeState);
     $sktRestock.on("order_refresh", sktOrderOrderFresh);
-    $sktRestock.on("fresh_partition", sktFreshPartition);
+    $sktRestock.on("orderpartition_refresh", sktOrderPartFresh);
   }
 
   const reloadView = (v) => $router.push(`/checkout?v=${v.id}`); // recarga el componente solo si el valor de la vista cambia
@@ -152,9 +152,34 @@
     let cmd = $restockStore.addOrUpdate(oid,data);
   }
 
-  const sktFreshPartition = async skt => {
-    console.log("Se ha actualizado una particion!!");
-    console.log(skt);
+  const sktOrderPartFresh = async skt => {
+    console.log("Partition refresh!!", skt);
+    let order = skt.order;
+    let resp = await RestockApi.orderFresh(order);
+    console.log(resp);
+    let data = resp.data.order;
+    let partitions = data.partition;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+
+    let partsDone = partitions.filter( p => p._status==4); // numero de particiones terminadas
+
+    if(partsDone.length == partitions.length){
+      $q.notify({
+        message:`El pedido ${oid} ha finalizado particiones`,
+        html:true,
+        color:"purple-10",
+        icon:"fa-solid fa-truck-ramp-box"
+      });
+    }else{
+      $q.notify({
+        message:`Particion lista para checkout en pedidido <b>${oid}</b>`,
+        html:true,
+        color:"pink-14",
+        icon:"fa-solid fa-truck-ramp-box"
+      });
+    }
   }
 
   init();
