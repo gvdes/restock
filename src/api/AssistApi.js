@@ -40,5 +40,10 @@ export default{
   nextState(data){
     let burl = `/changeStatus`;
     return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
+  },
+  getInvoices(){
+    let burl = `/getInvoices`;
+    return assistdb.get(burl).then( done => done ).catch( fail => fail);
   }
+
 }
