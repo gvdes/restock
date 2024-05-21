@@ -194,7 +194,7 @@ const reloadDashboard = () => {
 }
 
 const fresh = id => {
-  console.log("Se crearon las particiones");
+  console.log("Se crearon las particiones", id);
   $emit("freshOrder", id);
 };
 

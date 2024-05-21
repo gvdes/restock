@@ -361,20 +361,20 @@
 
     let data = {id:$route.params.oid,state:4,suply: supply.value.val._suplier_id };
     console.log(data);
-    const response = await AssistApi.nextState(data);
-    console.log(response);
-    partition.value._status = response.data.partition._status
-    partition.value.status.name = response.data.partition.name
-    if(response.data.partitionsEnd > order.value._status){
-      let nes = {id:$route.params.oid,state:response.data.partitionsEnd};
-      const nxt = await RestockApi.nextState(nes);
-      console.log(nxt);
+    // const response = await AssistApi.nextState(data);
+    // console.log(response);
+    // partition.value._status = response.data.partition._status
+    // partition.value.status.name = response.data.partition.name
+    // if(response.data.partitionsEnd > order.value._status){
+    //   let nes = {id:$route.params.oid,state:response.data.partitionsEnd};
+    //   const nxt = await RestockApi.nextState(nes);
+    //   console.log(nxt);
 
-    }
+    // }
 
-    if(response.status==200){ init(); }
+    // if(response.status==200){ init(); }
 
-    $q.loading.hide();
+    // $q.loading.hide();
   }
 
   init();
