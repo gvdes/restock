@@ -275,13 +275,15 @@ import { useRoute, useRouter } from 'vue-router';
 import dayjs from 'dayjs';
 import RestockApi from 'src/api/RestockApi.js';
 import pdf from 'src/api/pdfCreate.js';
-
+import { $sktRestock, usrSkt } from 'boot/socket';
 import AssitApi from 'src/api/AssistApi.js';
 import { useQuasar } from 'quasar';
 
 const $route = useRoute();
 const $router = useRouter();
 const $q = useQuasar();
+
+const user_socket = usrSkt;
 
 const wndGenInvoice = ref({ state: false });
 const wndQRCode = ref({ state: false, key: null });
@@ -376,6 +378,9 @@ const init = async () => {
     supply.value.opts = supp
     $q.loading.hide();
   } else { displayErrRequest(response); }
+
+  $sktRestock.connect();
+  $sktRestock.emit("joinat", user_socket);
 }
 
 const setPartition = (a) => {
