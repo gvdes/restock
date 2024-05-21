@@ -98,6 +98,9 @@
     $sktRestock.on("order_update", sktOrderUpdate);
     $sktRestock.on("order_changestate", sktOrderChangeState);
     $sktRestock.on("order_refresh", sktOrderOrderFresh);
+    $sktRestock.on("orderpartition_refresh", sktOrderPartFresh);
+
+    // partition_refresh
   }
 
   const reloadView = (v) => {
@@ -153,6 +156,7 @@
     let resp = await RestockApi.orderFresh(order);
     console.log(resp);
     let data = resp.data.order;
+    console.log(data.partition);
     let oid = resp.data.oid;
 
     let cmd = $restockStore.addOrUpdate(oid,data);
@@ -164,6 +168,29 @@
     // let workZone = user_socket.workpoint;
     // let profile = user_socket.profile;
     $sktRestock.emit("order_refresh", { order: id });
+  }
+
+  const sktOrderPartFresh = async skt => {
+    console.log("Partition refresh!!", skt);
+    let order = skt.order;
+    let resp = await RestockApi.orderFresh(order);
+    console.log(resp);
+    let data = resp.data.order;
+    let partitions = data.partition;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+
+    let partsDone = partitions.filter( p => p._status==4); // numero de particiones terminadas
+
+    if(partsDone.length == partitions.length){
+      $q.notify({
+        message:`El pedido <b>${oid}</b> esta listo para iniciar <b>embarque</b>`,
+        html:true,
+        color:"purple-10",
+        icon:"fa-solid fa-truck-ramp-box"
+      });
+    }
   }
 
   watch(() => $route.query, () => { init(); }); // vigila cambios de la ruta

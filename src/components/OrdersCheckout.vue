@@ -63,7 +63,7 @@
   const open = (q,row,c) => $router.push(`/checkout/${row.id}`);
 
   // const ordersSize = computed(() => $restockStore.ordersSize);
-  const ordersdb = computed(() => $restockStore.ordersdb.filter(o => o._status > 2));
+  const ordersdb = computed(() => $restockStore.ordersdb.filter(o => o._status>2));
 
   const setOrderViewer = async (evt, row, idx) => {
     orderViewer.value.head=row;
