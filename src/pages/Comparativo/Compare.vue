@@ -1,10 +1,13 @@
 <template>
   <q-page padding>
     <q-table
-      title="Table Title"
-      :rows="invoices.headers"
+      title="SALIDAS VS ENTRADAS"
+      :rows="invoices"
+      :columns="table.columns"
       row-key="FACTURA"
     />
+
+
   </q-page>
 </template>
 
@@ -18,10 +21,22 @@ import { useRoute, useRouter } from 'vue-router';
 const $q = useQuasar();
 const $route = useRoute();
 
-const invoices = ref({
-  headers:[],
-  body:[]
+const table = ref({
+  columns:[
+    {name: 'invoice',label:'Factura',field: row => row.invoices[0]?.FACTURA},
+    {name: 'entrie',label:'Entrada',field: row => row.entries[0]?.FACTURA},
+    {name: 'workpoint',label:'Sucursal',field: row => row.store_name},
+    {name: 'reference',label:'Referencia',field: row => row.invoices[0]?.REFFAC},
+    {name: 'warehouse',label:'Almacen',field: row => row.invoices[0]?.ALMFAC},
+    {name: 'hour',label:'Hora',field: row => row.invoices[0]?.HORFAC},
+    {name: 'totales', label: 'Total', field: row => row.invoices[0]?.TOTFAC == row.entries[0]?.TOTFRE ? 'IGUAL' : 'DIFERENTE'},
+    {name: 'articulos', label: 'Articulos', field: row => row.invoices[0]?.ARTICULOS == row.entries[0]?.ARTICULOS ? 'IGUAL' : 'DIFERENTE'},
+    {name: 'cantidad', label: 'Cantidades', field: row => row.invoices[0]?.CANTIDAD == row.entries[0]?.CANTIDAD ? 'IGUAL' : 'DIFERENTE'},
+
+  ]
 })
+
+const invoices = ref([])
 
 
 
@@ -31,8 +46,7 @@ const init = async () => {
   if(resp.status == 200){
 
   console.log(resp.data);
-  // invoices.value.headers = resp.data.facturas.facturas
-  // invoices.value.body = resp.data.facturas.productos
+  invoices.value = resp.data
 
   $q.loading.hide()
   }
