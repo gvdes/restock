@@ -15,8 +15,8 @@ import dayjs from 'dayjs';
     let dat = await AssitApi.getSalida(sal);
     console.log(dat);
     if (dat.status == 200) {
-      // const qrData = `http://192.168.10.189:2200/#/checkin/${pedido}?key=${qrvalue}`;
-      const qrData = `http://192.168.10.238:1308/#/checkin/${pedido}?key=${qrvalue}`;
+      const qrData = `http://192.168.10.189:2200/#/checkin/${pedido}?key=${qrvalue}`;
+      // const qrData = `http://192.168.10.112:9000/#/checkin/${pedido}?key=${qrvalue}`;
 
       const qrOptions = {
         margin: 1,
