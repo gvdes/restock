@@ -8,8 +8,8 @@ import axios from 'axios'
 // "export default () => {}" function below (which runs individually
 // for each client)
 const vizapi = axios.create({
-  baseURL: 'http://192.168.10.112:1619/vizapi/public/L'
-  // baseURL: 'http://192.168.10.189/vizapi/public/L'
+  // baseURL: 'http://192.168.10.112:1619/vizapi/public/L'
+  baseURL: 'http://192.168.10.189/vizapi/public/L'
   // baseURL: 'http://192.168.10.112:1619/vizapi/public/L'
   // baseURL: 'http://localhost:3220/vizapi/public/L'
   // baseURL: 'http://192.168.10.238:1619/vizapi/public/L'
