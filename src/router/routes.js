@@ -25,6 +25,14 @@ const routes = [
     path: '/dashboard',
     component: () => import('layouts/DashboardLyt.vue'),
   },
+  {
+    path: '/entries',
+    component: () => import('layouts/Entries.vue'),
+    children:[
+      { path:'/compare', component: () => import('pages/Comparativo/Compare.vue') },
+      { path:'/automate', component: () => import('pages/Automatico/Automate.vue') }
+    ]
+  },
 ]
 
 export default routes
