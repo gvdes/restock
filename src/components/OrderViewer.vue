@@ -257,7 +257,7 @@ const chof = ref({
 const selSupply = ref(null)
 
 
-const $emit = defineEmits(['loaded', 'loading', 'fresh']);
+const $emit = defineEmits(['loaded', 'loading', 'fresh', 'chofiAssigned']);
 
 const head = ref($props.head);
 const order = ref(null);
@@ -375,6 +375,8 @@ const startSupply = async () => {
 }
 
 const tryGenInvoice = async () => {
+  console.log("Generando factura");
+
   $q.loading.show({ message: "Cambiando, espera..." });
   let dat = {
     chofi: chof.value.val,
@@ -383,18 +385,26 @@ const tryGenInvoice = async () => {
     status: 7
   }
   let savesupply = await AssitApi.SaveChofi(dat);
+  console.log("%cDELIVERY ASSIGNED","color:white; background:#b71540; font-size:1.3em;");
+  console.log(savesupply);
 
   if (savesupply.status == 200) {
     let data = { id: head.value.id, state: 7, suply: selSupply.value._suplier_id }
     console.log(data);
-    let resp = await AssitApi.nextState(data)
+    let resp = await AssitApi.nextState(data);
+    console.log("%cState Changed on Assist","color:white; background:#0a3d62; font-size:1.2em;");
     console.log(resp)
     if (resp.data.partitionsEnd > order.value._status) {
+      console.log("%cTodas las particiones se han finalizado","color:white; background:#eb2f06; font-size:1.3em;");
       let nes = { id: head.value.id, state: resp.data.partitionsEnd };
       console.log(nes)
       const nxt = await RestockApi.nextState(nes);
+      console.log("%cState Changed on RestockAPI","color:white; background:#079992; font-size:1.3em;");
       console.log(nxt);
     }
+
+    $emit("chofiAssigned", data.id);
+
     if (resp.status == 200) {
       init();
       let id = resp.data.partition.id

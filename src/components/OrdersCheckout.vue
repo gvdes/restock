@@ -32,7 +32,7 @@
   const $route = useRoute();
   const $router = useRouter();
   const $restockStore = useRestockStore();
-  const colorCellState = ['text-grey-5 text-bold','text-bold text-h6 text-red','text-indigo', '4', '5','6','text-bold text-orange','8','text-primary','text-positive'];
+  const colorCellState = ['text-grey-5 text-bold','text-bold text-h6 text-red','text-indigo', 'text-orange-8 text-bold', 'text-positive text-bold','6','7','8','9','9'];
 
   const table = ref({
     columns:[
