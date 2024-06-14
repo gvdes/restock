@@ -88,7 +88,7 @@
     </q-table>
 
     <q-dialog full-width v-model="orderViewer.state" :persistent="orderViewer.block" :no-esc-dismiss="orderViewer.block" :no-backdrop-dismiss="orderViewer.block">
-      <OrderViewer :head="orderViewer.head" @loaded="orderViewer.block=false" @loading="orderViewer.block=true" @fresh="fresh" />
+      <OrderViewer :head="orderViewer.head" @loaded="orderViewer.block=false" @loading="orderViewer.block=true" @fresh="fresh" @chofiAssigned="fresh" />
     </q-dialog>
 
     <q-dialog v-model="wndReport.state">
@@ -147,7 +147,7 @@ const table = ref({
       },
     { name: 'from', label: 'Sucursal', field: row => row.from.name.toUpperCase(), align: "left", sortable: true },
     { name: 'to', label: 'Destino', field: row => row.to.name.toUpperCase(), align: "left", sortable: true },
-    { name: 'notes', label: 'Notas', field: row => row.notes, align: "left", classes: row => row.notes ? 'text-orange text-bold' : '' },
+    { name: 'notes', label: 'Notas', field: row => row.notes, align: "left", classes: 'text-orange text-bold' },
     { name: 'tmodels', label: 'Modelos', field: row => row.products_count, align: "center", sortable: true },
   ],
   filter: '',
@@ -194,7 +194,8 @@ const reloadDashboard = () => {
 }
 
 const fresh = id => {
-  console.log("Se crearon las particiones");
+  console.log(id);
+  console.log("Se crearon las particiones", id);
   $emit("freshOrder", id);
 };
 

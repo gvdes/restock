@@ -275,13 +275,15 @@ import { useRoute, useRouter } from 'vue-router';
 import dayjs from 'dayjs';
 import RestockApi from 'src/api/RestockApi.js';
 import pdf from 'src/api/pdfCreate.js';
-
+import { $sktRestock, usrSkt } from 'boot/socket';
 import AssitApi from 'src/api/AssistApi.js';
 import { useQuasar } from 'quasar';
 
 const $route = useRoute();
 const $router = useRouter();
 const $q = useQuasar();
+
+const user_socket = usrSkt;
 
 const wndGenInvoice = ref({ state: false });
 const wndQRCode = ref({ state: false, key: null });
@@ -376,6 +378,9 @@ const init = async () => {
     supply.value.opts = supp
     $q.loading.hide();
   } else { displayErrRequest(response); }
+
+  $sktRestock.connect();
+  $sktRestock.emit("joinat", user_socket);
 }
 
 const setPartition = (a) => {
@@ -447,6 +452,7 @@ const nextState = async () => {
 
   let data = { id: $route.params.oid, state: 6, suply: supplier.value.val._suplier_id }
   console.log(data);
+  console.log("... por acasito");
   let resp = await AssitApi.nextState(data)
   if (resp.status == 200) {
     partition.value._status = resp.data.partition._status
@@ -459,6 +465,8 @@ const nextState = async () => {
       const nxt = await RestockApi.nextState(nes);
       console.log(nxt);
     }
+
+    $sktRestock.emit("orderpartition_refresh", { order: data.id });
 
     if (response.status == 200) {
 
@@ -486,16 +494,9 @@ const nextState = async () => {
           } else { alert("Error 500: Ocurrio un error inesperado :("); }
         } else { alert(`Error ${response.status}: ${response.data}`); console.log(response.data) }
       }
-
-
-
     } else { alert(`Error ${response.status}: ${response.data}`); }
-
-
     console.log(resp)
-  } else {
-    console.log(resp)
-  }
+  } else { console.log(resp) }
 
   $q.loading.hide();
 }
@@ -514,9 +515,8 @@ const changeStatus = async () => {
       const nxt = await RestockApi.nextState(nes);
       console.log(nxt);
     }
-  } else {
-    console.log(resp)
-  }
+    $sktRestock.emit("orderpartition_refresh", { order: data.id });
+  } else { console.log(resp) }
 }
 
 

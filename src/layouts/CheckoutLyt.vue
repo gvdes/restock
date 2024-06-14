@@ -32,11 +32,14 @@
   import { useRestockStore } from 'stores/restock';
   import { useQuasar } from 'quasar';
   import OrdersCheckoutComp from 'src/components/OrdersCheckout.vue';
+  import { $sktRestock, usrSkt } from 'boot/socket';
 
   const $route = useRoute();
   const $router = useRouter();
   const $restockStore = useRestockStore();
   const $q = useQuasar();
+
+  const user_socket = usrSkt;
 
   const optstores = ref([
     { 'id':0, 'alias':'Todas'},
@@ -77,6 +80,16 @@
     viewstore.value = optstores.value[0];
     console.log("%cMainLayout listo!!","font-size:2em;color:orange;");
     $q.loading.hide();
+
+    $sktRestock.connect();
+    $sktRestock.emit("joinat", user_socket);
+
+    $sktRestock.on("joineddashreq", sktJoinatRes);
+    $sktRestock.on("creating", sktOrderCreate);
+    $sktRestock.on("order_update", sktOrderUpdate);
+    $sktRestock.on("order_changestate", sktOrderChangeState);
+    $sktRestock.on("order_refresh", sktOrderOrderFresh);
+    $sktRestock.on("orderpartition_refresh", sktOrderPartFresh);
   }
 
   const reloadView = (v) => $router.push(`/checkout?v=${v.id}`); // recarga el componente solo si el valor de la vista cambia
@@ -85,6 +98,89 @@
   const dispDateEnd = computed(() =>  dateranges.value.to.format("YYYY/MM/DD")); // despliega la fecha de fin
 
   watch(() => $route.query, () => { init(); }); // vigila cambios de la ruta
+
+  const sktJoinatRes = skt => {
+    console.log(
+      `%c${skt.user.me.nick} de ${skt.from.alias} se ha unido a Restock (UID: ${skt.user.me.id})`,
+      "background:#076F3E;color:#f5f6fa;border-radius:10px;padding:10px;font-size:1.1em;"
+    );
+  }
+
+  const sktOrderCreate = async skt => {
+    let order = skt.order;
+    console.log(`Pedido ${order.id} iniciado`);
+    let resp = await RestockApi.orderFresh(order.id);
+    let data = resp.data.order;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+  }
+
+  const sktOrderUpdate = skt => { $restockStore.orderUpdate(skt); }
+
+  const sktOrderChangeState = async skt => {
+    let order = skt.order;
+    console.log(`Refrescando orden ${order.id}`);
+    let newstate = skt.state;
+    let resp = await RestockApi.orderFresh(order.id);
+    console.log(resp.data);
+    let data = resp.data.order;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+
+    if (data._status == 4){
+      $q.notify({
+        message:`El pedido <b>${order.id}</b> esta listo para CheckOut!!`,
+        color:"positive",
+        textColor:"white",
+        position:"bottom",
+        html:true,
+        timeout:5000
+      });
+    }
+  }
+
+  const sktOrderOrderFresh = async skt => {
+    console.log("REFRESHING BY SKT!!", skt);
+    let order = skt.order;
+    let resp = await RestockApi.orderFresh(order);
+    console.log(resp);
+    let data = resp.data.order;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+  }
+
+  const sktOrderPartFresh = async skt => {
+    console.log("Partition refresh!!", skt);
+    let order = skt.order;
+    let resp = await RestockApi.orderFresh(order);
+    console.log(resp);
+    let data = resp.data.order;
+    let partitions = data.partition;
+    let oid = resp.data.oid;
+
+    let cmd = $restockStore.addOrUpdate(oid,data);
+
+    let partsDone = partitions.filter( p => p._status==4); // numero de particiones terminadas
+
+    if(partsDone.length == partitions.length){
+      $q.notify({
+        message:`El pedido ${oid} ha finalizado particiones`,
+        html:true,
+        color:"purple-10",
+        icon:"fa-solid fa-truck-ramp-box"
+      });
+    }else{
+      $q.notify({
+        message:`Particion lista para checkout en pedidido <b>${oid}</b>`,
+        html:true,
+        color:"pink-14",
+        icon:"fa-solid fa-truck-ramp-box"
+      });
+    }
+  }
 
   init();
   document.title="CheckOut";
