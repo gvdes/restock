@@ -27,9 +27,12 @@
         <div class="text-overline text-grey-7 col">Notas</div>
         <div class="text-h6">{{ head.notes }}</div>
       </div>
-      <div class="flex item-center ">
-        <q-btn color="positive" icon="start" dense label="Iniciar Surtido" @click="selsupply"
-          v-if="cstate && cstate.id == 2" flat rounded />
+      <div class="text-center ">
+        <div class="text-overline text-grey-7"> <q-btn color="positive" icon="start" dense label="Iniciar" @click="selsupply"
+          v-if="cstate && cstate.id == 2" flat rounded /></div>
+          <q-separator spaced inset vertical dark />
+        <div class="text-h6"><q-btn color="negative" icon="close" dense label="Declinar" @click="removePed"
+          v-if="cstate && cstate.id == 2" flat rounded /></div>
         <q-btn color="indigo-10" icon="print" dense v-if="cstate && cstate.id > 2">
           <q-menu class="bg-grey-1 text-indigo-10" style="min-width:250px;">
             <PrinterSelect @selected="printForSupply" />
@@ -223,6 +226,23 @@
     </q-card>
   </q-dialog>
 
+  <q-dialog v-model="delsur" persistent>
+    <q-card>
+      <q-card-section class="row items-center">
+        <q-avatar icon="warning" color="negative" text-color="white" />
+        <div class="q-ml-sm text-bold">Estas a punto de cancelar el pedido </div>
+        <div class="q-ml-sm text-bold"> {{ head.id}}</div>
+      </q-card-section>
+      <q-card-section>
+        Es correcto?
+      </q-card-section>
+      <q-card-actions align="center">
+        <q-btn flat label="Cancel" color="positive" v-close-popup />
+        <q-btn flat label="Confirmar" color="negative" @click="remove"/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
 </template>
 
 <script setup>
@@ -270,6 +290,7 @@ const startingStep = ref(false);
 const wndGenInvoice = ref({ state: false });
 const wndQRCode = ref({ state: false, key: null });
 const partition = ref(null);
+const delsur = ref(false)
 const viewSupply = ref({
   state: false
 });
@@ -340,6 +361,10 @@ const init = async () => {
 
 const selsupply = () => {
   viewSupply.value.state = true;
+}
+
+const removePed = () => {
+  delsur.value = true
 }
 
 const startSupply = async () => {
@@ -488,6 +513,24 @@ const filterCH = (val, update, abort) => {
     }
 
   })
+}
+
+const remove = async () => {
+  console.log("Eliminando Pedido");
+  $emit("loading"); // blockea la venta modal del padre que contiene eeste componente
+
+  let newState = 100;
+  let data = { id: head.value.id, state: newState };
+  const response = await RestockApi.nextState(data);
+
+  if (response.status == 200) {
+    delsur.value = false;
+    $q.notify({ message: `Surtido Cancelado para el pedido  ${head.value.id}`, icon: "close", position: "center", color: "negative" });
+    init();
+    $emit("fresh", head.value.id);
+  } else { alert(`Error ${response.status}: ${response.data} 1`); }
+
+  $emit("loaded"); // desblockea la venta modal del padre que contiene eeste componente
 }
 
 onBeforeMount(() => viewcols.value = table.value.columns.map(c => c.name));

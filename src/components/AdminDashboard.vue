@@ -77,12 +77,16 @@
       <template v-slot:top>
         <div class="full-width row items-center">
           <div class="col text-h6 text-dark">Pedidos: {{ ordersSize }}</div>
+
           <q-input dense v-model="table.filter" input-class="text-uppercase" placeholder="Buscar" color="pink-5">
             <template v-slot:append>
               <q-icon name="search" />
             </template>
           </q-input>
+          <q-separator spaced inset vertical dark />
+          <div><q-icon name="archive" size="md" color="negative" @click="removes" /></div>
         </div>
+
       </template>
 
     </q-table>
@@ -95,6 +99,19 @@
       <TableReport :rows="wndReport.data" :name="wndReport.name" :type="wndReport.type"
         @cardResumeActived="reloadDashboard" />
     </q-dialog>
+
+    <q-dialog v-model="wndRemove" full-width>
+     <q-card style="width: 700px; max-width: 80vw;">
+        <q-card-section class="q-pt-none">
+          <q-table flat bordered row-key="id" :rows="orderrem" :columns="table.columns"
+          :pagination="table.pagination" title="Pedidos Cancelados"></q-table>
+        </q-card-section>
+
+      </q-card>
+
+    </q-dialog>
+
+
   </q-page>
 </template>
 
@@ -157,6 +174,7 @@ const table = ref({
     rowsPerPage: 20
   }
 });
+const wndRemove = ref(false)
 const wndReport = ref({ state: false, title: "", data: null, name: null, type: null });
 
 const orderViewer = ref({
@@ -166,9 +184,12 @@ const orderViewer = ref({
 });
 
 const ordersSize = computed(() => $restockStore.ordersSize);
-const ordersok = computed(() => $restockStore.ordersok);
+const ordersok = computed(() => $restockStore.ordersok.filter(e=> e._status != 100));
+const orderrem = computed(() => $restockStore.ordersok.filter(e=> e._status == 100));
 const orderserrors = computed(() => $restockStore.orderserrors);
 const stats = computed(() => $restockStore.resume);
+
+
 
 const setOrderViewer = async (row) => {
   console.log(row.row)
@@ -198,5 +219,9 @@ const fresh = id => {
   console.log("Se crearon las particiones", id);
   $emit("freshOrder", id);
 };
+
+const removes = () => {
+  wndRemove.value = true
+}
 
 </script>
