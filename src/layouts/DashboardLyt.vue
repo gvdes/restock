@@ -30,7 +30,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import dayjs from 'dayjs';
   import RestockApi from 'src/api/RestockApi.js';
-  import { useRestockStore } from 'stores/restock';
+  import { useRestockStore } from 'stores/Restock';
   import { useQuasar } from 'quasar';
   import AdminDashboardComp from 'src/components/AdminDashboard.vue';
   import { $sktRestock, usrSkt  } from 'boot/socket';

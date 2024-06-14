@@ -57,4 +57,12 @@ export default{
     let burl = "/restock/print/key";
     return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
   },
+  createAutomate(data){
+    let burl = "/restock/create";
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
+  suc(){
+    let burl = "/restock/suc";
+    return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
+  }
 }

@@ -121,7 +121,7 @@ import { useRoute, useRouter } from 'vue-router';
 import dayjs from 'dayjs';
 import { useQuasar } from 'quasar';
 import RestockApi from 'src/api/RestockApi.js';
-import { useRestockStore } from 'stores/restock';
+import { useRestockStore } from 'stores/Restock';
 import OrderViewer from 'src/components/OrderViewer.vue';
 import TableReport from 'src/components/TableReport.vue';
 
