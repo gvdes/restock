@@ -34,7 +34,9 @@
     </q-select>
   </div>
   <div class="q-pa-sm text-right">
-    <q-btn color="primary" icon="print" v-if="wkp&&printer" @click="selected"/>
+    <q-btn color="primary" icon="print" v-if="wkp&&printer && !partition" @click="selected"/>
+    <q-btn color="secondary" icon="print" v-if="wkp&&printer && partition" @click="selectedPartition"/>
+
   </div>
 </template>
 
@@ -45,7 +47,10 @@
 
   const $q = useQuasar();
   const $restockStore = useRestockStore();
-  const $emit = defineEmits(["selected"]);
+  const $emit = defineEmits(["selected","selectedPartition"]);
+  const props = defineProps({
+    partition:{type:Boolean}
+  })
 
   const wkp = ref(null);
   const printer = ref(null);
@@ -57,6 +62,12 @@
     $q.localStorage.set("LUP",{ wkp:wkp.value, printer:printer.value });
     $emit("selected", printer.value);
   };
+
+  const selectedPartition = () => {
+    $q.localStorage.set("LUP",{ wkp:wkp.value, printer:printer.value });
+    $emit("selectedPartition", printer.value);
+  };
+
 
   const LUP = $q.localStorage.getItem("LUP");
   if(LUP){

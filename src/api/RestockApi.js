@@ -64,5 +64,9 @@ export default{
   suc(){
     let burl = "/restock/suc";
     return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
-  }
+  },
+  printForPartition(data){
+    let burl = "/restock/print/Partition";
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
 }

@@ -35,7 +35,7 @@
           v-if="cstate && cstate.id == 2" flat rounded /></div>
         <q-btn color="indigo-10" icon="print" dense v-if="cstate && cstate.id > 2">
           <q-menu class="bg-grey-1 text-indigo-10" style="min-width:250px;">
-            <PrinterSelect @selected="printForSupply" />
+            <PrinterSelect @selected="printForSupply" :partition="false" />
           </q-menu>
         </q-btn>
       </div>
@@ -124,6 +124,12 @@
                     Surtidor
                     <br>
                     <strong>{{ props.row._suplier }}</strong>
+                    <q-separator spaced inset vertical dark />
+                    <q-icon name="print" color="pink" size="sm" @click="partitionPrint(props.row)" >
+                      <q-menu class="bg-grey-1 text-indigo-10" style="min-width:250px;">
+                        <PrinterSelect @selectedPartition="printForPartition" :partition="true"  />
+                      </q-menu>
+                    </q-icon>
                     <br>
                     <div class="text-overline text-grey-7"> <q-badge color="primary" text-color="white"
                         :label="props.row.status.name" /></div>
@@ -274,6 +280,7 @@ const chof = ref({
   filter: null
 })
 
+const part = ref(null);
 const selSupply = ref(null)
 
 
@@ -387,6 +394,7 @@ const startSupply = async () => {
     let savesupply = await AssitApi.SaveSupply(dat);
     console.log(savesupply)
     if (savesupply.status == 200) {
+
       init();
       $emit("fresh", head.value.id);
       viewSupply.value.state = false;
@@ -483,6 +491,23 @@ const printForSupply = async data => {
   } else { console.error(response); alert(`Error ${response.status}: ${response.data}`); }
 }
 
+const printForPartition = async data => {
+  $q.loading.show({ message: "..." });
+  console.log(data.ip);
+  console.log(part.value)
+  const resp = await RestockApi.printForPartition({ ip: data.ip, port: data._port, _partition: part.value });
+  console.log(resp);
+  if (resp.status == 200) {
+    let responding = resp.data;
+    if (responding) {
+      $q.notify({ message: "Impresion correcta", icon: "done", color: "positive", position: "top" });
+    } else {
+      $q.notify({ message: `Sin conexion a <b>${data.name} <small>(${data.ip})</small></b>`, icon: "fas fa-bug", color: "negative", position: "center", html: true, timeout: 4000 });
+    }
+    $q.loading.hide();
+  } else { console.error(resp); alert(`Error ${resp.status}: ${resp.data}`); }
+}
+
 const genvoice = async (row) => {
   selSupply.value = row
   wndGenInvoice.value.state = true
@@ -532,6 +557,11 @@ const remove = async () => {
 
   $emit("loaded"); // desblockea la venta modal del padre que contiene eeste componente
 }
+const partitionPrint = (row) => {
+  console.log(row.id)
+  part.value = row.id
+}
+
 
 onBeforeMount(() => viewcols.value = table.value.columns.map(c => c.name));
 init();
