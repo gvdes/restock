@@ -54,6 +54,7 @@ import dayjs from 'dayjs';
             chunk[i][1] = chunk[i][1] == 0 ? 1 : parseFloat(chunk[i][1]);
             chunk[i][2] = parseFloat(chunk[i][2]);
             chunk[i][3] = parseFloat(chunk[i][3]);
+            chunk[i][4] = chunk[i][4].replace(/\n/g, " ");
             sumaBullfa += parseFloat(chunk[i][1]); // Sumar al total la propiedad 'BULLFA' convertida a número
             totcan += parseFloat(chunk[i][3]);
           }
