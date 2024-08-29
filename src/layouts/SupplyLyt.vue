@@ -41,6 +41,8 @@
 
   const user_socket = usrSkt;
 
+  const dashboards = ["p2","P2","p3","P3","bol","BOL","sap","SAP","TEX"];
+
   const optstores = ref([
     { 'id':0, 'alias':'Todas'},
     { 'id':1, 'alias':'CEDIS', '_state':1},
@@ -72,8 +74,15 @@
     viewdate.value = optranges.value[idx]; // setea el valor del select de la vista
     dateranges.value.from = dayjs(Date.now()).startOf(viewdate.value.id); // setea el valor de inicio de la vista
 
-    const req = await RestockApi.index(viewdate.value.id);
+    let dash = $route.query.d ? (dashboards.includes($route.query.d) ? $route.query.d : "all") : "all";
+    console.log(dash);
+
+    // const req = await RestockApi.index(viewdate.value.id);
+    // console.log(req);
+
+    const req = await RestockApi.index(viewdate.value.id,dash);
     console.log(req);
+
 
     $restockStore.fillOrders(req.orders);
 
@@ -91,7 +100,12 @@
     $sktRestock.on("order_refresh", sktOrderOrderFresh);
   }
 
-  const reloadView = (v) => $router.push(`/supply?v=${v.id}`); // recarga el componente solo si el valor de la vista cambia
+  // const reloadView = (v) => $router.push(`/supply?v=${v.id}`); // recarga el componente solo si el valor de la vista cambia
+
+  const reloadView = (v) => {
+    let dash = $route.query.d ? (dashboards.includes($route.query.d) ? $route.query.d : "all") : "all";
+    $router.push(`/supply?v=${v.id}&d=${dash}`);
+  } // recarga el componente solo si el valor de la vista cambia
 
   const dispDateInit = computed(() => dateranges.value.from.format("YYYY/MM/DD")); // despliega la fecha de inicio
   const dispDateEnd = computed(() =>  dateranges.value.to.format("YYYY/MM/DD")); // despliega la fecha de fin

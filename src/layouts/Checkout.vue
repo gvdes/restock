@@ -166,8 +166,7 @@
                   <div class="text-center col">
                     <div>PxC</div>
                     <q-input dense borderless v-model="wndCounter.form.ipack" type="number"
-                      input-class="text-h6 text-center" :readonly="wndCounter.item.units.id != 3"
-                       />
+                      input-class="text-h6 text-center" :readonly="wndCounter.item.units.id != 3" />
                   </div>
 
                   <div class="text-center col">
@@ -373,7 +372,7 @@ const init = async () => {
     ostate.value = response.data.status;
     order.value = response.data
     supplier.value.opts = response.data.partition
-    let supp = await AssitApi.getVerified();
+    let supp = await AssitApi.getVerified(order.value.to.id);
     console.log(supp);
     supply.value.opts = supp
     $q.loading.hide();
@@ -447,6 +446,7 @@ const setDeliveryProduct = async () => {
 
 const nextState = async () => {
   $q.loading.show({ message: "Terminando, espera..." });
+  console.log(order.value._workpoint_from)
 
   wndNextState.value.state = false;
 
@@ -457,47 +457,66 @@ const nextState = async () => {
   if (resp.status == 200) {
     partition.value._status = resp.data.partition._status
     partition.value.status.name = resp.data.partition.name
-    const response = await RestockApi.genInvoice($route.params.oid, partition.value._suplier_id);
-    console.log(response);
-
-    if(resp.data.partitionsEnd > order.value._status){
-      let nes = {id:$route.params.oid,state:resp.data.partitionsEnd};
-      const nxt = await RestockApi.nextState(nes);
-      console.log(nxt);
-    }
-
-    $sktRestock.emit("orderpartition_refresh", { order: data.id });
-
-    if (response.status == 200) {
-
-      if (response.data.invoice) {
-        $q.notify({
-          message: `Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
-          html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
-        });
-        wndQRCode.value.key = response.data.requisition.entry_key;
-        pdf.pdf(response.data.invoice.folio, wndQRCode.value.key, $route.params.oid)
-
-        console.log(partition.value.id)
-        const entry = await RestockApi.genEntry(partition.value.id);
-        console.log(entry);
-
-        if (entry.status == 200) {
-          console.log(entry.data);
-
-          if (entry.data) {
-            $q.notify({
-          message: `Se genero la Entrada <b class="text-h6">${entry.data.invoice.folio}</b>`,
-          html: true, position: "center", icon: "done", timeout: 5000, color: "orange"
-        });
-
-          } else { alert("Error 500: Ocurrio un error inesperado :("); }
-        } else { alert(`Error ${response.status}: ${response.data}`); console.log(response.data) }
+    if (order.value.from._type != 1) {
+      const response = await RestockApi.genInvoice($route.params.oid, partition.value._suplier_id);
+      console.log(response);
+      if (resp.data.partitionsEnd > order.value._status) {
+        let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
+        const nxt = await RestockApi.nextState(nes);
+        console.log(nxt);
       }
-    } else { alert(`Error ${response.status}: ${response.data}`); }
-    console.log(resp)
-  } else { console.log(resp) }
+      $sktRestock.emit("orderpartition_refresh", { order: data.id });
+      if (response.status == 200) {
+        if (response.data.invoice) {
+          $q.notify({
+            message: `Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
+            html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
+          });
+          wndQRCode.value.key = response.data.requisition.entry_key;
+          pdf.pdf(response.data.invoice.folio, wndQRCode.value.key, $route.params.oid)
 
+          console.log(partition.value.id)
+          const entry = await RestockApi.genEntry(partition.value.id);
+          console.log(entry);
+
+          if (entry.status == 200) {
+            console.log(entry.data);
+
+            if (entry.data) {
+              $q.notify({
+                message: `Se genero la Entrada <b class="text-h6">${entry.data.invoice.folio}</b>`,
+                html: true, position: "center", icon: "done", timeout: 5000, color: "orange"
+              });
+
+            } else { alert("Error 500: Ocurrio un error inesperado :("); }
+          } else { alert(`Error ${response.status}: ${response.data}`); console.log(response.data) }
+        }
+      } else { alert(`Error ${response.status}: ${response.data}`); }
+      console.log(resp)
+    } else{ // SE GENERA EL TRASPASO SI ES DE CEDIS A CEDIS
+      const response = await RestockApi.genTransfer($route.params.oid, partition.value._suplier_id);
+      console.log(response);
+      if (resp.data.partitionsEnd > order.value._status) {
+        let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
+        const nxt = await RestockApi.nextState(nes);
+        console.log(nxt);
+      }
+      $sktRestock.emit("orderpartition_refresh", { order: data.id });
+      if (response.status == 200) {
+        console.log(response)
+        if (response.data.transfer) {
+          console.log(response)
+          $q.notify({
+            message: `Se genero el Traspaso <b class="text-h6">${response.data.transfer.folio}</b>`,
+            html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
+          });
+          wndQRCode.value.key = response.data.requisition.entry_key;
+          pdf.pdfTransfer(response.data.transfer.folio, wndQRCode.value.key, $route.params.oid)
+        }
+      } else { alert(`Error ${response.status}: ${response.data}`); }
+      console.log(resp)
+    }
+  }else { console.log(resp) }
   $q.loading.hide();
 }
 
@@ -510,8 +529,8 @@ const changeStatus = async () => {
     partition.value._status = resp.data.partition._status
     partition.value.status.name = resp.data.partition.name
     console.log(resp)
-    if(resp.data.partitionsEnd > order.value._status){
-      let nes = {id:$route.params.oid,state:resp.data.partitionsEnd};
+    if (resp.data.partitionsEnd > order.value._status) {
+      let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
       const nxt = await RestockApi.nextState(nes);
       console.log(nxt);
     }

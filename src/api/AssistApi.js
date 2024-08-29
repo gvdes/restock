@@ -1,12 +1,12 @@
 import { assistdb } from "src/boot/axios";
 
 export default{
-  getSupply(){
-    let burl = `/getSupply`;
+  getSupply(data){
+    let burl = `/getSupply/${data}`;
     return assistdb.get(burl).then( done => done.data ).catch( fail => fail);
   },
-  getVerified(){
-    let burl = `/getVerified`;
+  getVerified(data){
+    let burl = `/getVerified/${data}`;
     return assistdb.get(burl).then( done => done.data ).catch( fail => fail);
   },
   SaveSupply(data){
@@ -29,12 +29,16 @@ export default{
     let burl = `/getCheck/${data}`;
     return assistdb.get(burl).then( done => done ).catch( fail => fail);
   },
-  getChof(){
-    let burl = `/getChof`;
+  getChof(data){
+    let burl = `/getChof/${data}`;
     return assistdb.get(burl).then( done => done ).catch( fail => fail);
   },
   getSalida(data){
     let burl = `/getSalida`;
+    return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
+  },
+  getTransfer(data){
+    let burl = `/getTransfer`;
     return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
   },
   nextState(data){

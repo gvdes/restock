@@ -29,6 +29,14 @@ export default{
     let burl = `/restock/${id}/${supply}/newinvoice`;
     return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
   },
+  genTransfer(id,supply){
+    let burl = `/restock/${id}/${supply}/newTransfer`;
+    return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
+  },
+  genTransferRec(id,supply){
+    let burl = `/restock/${id}/${supply}/newTransferRec`;
+    return vizapi.get(burl).then( done => done ).catch( fail => fail.response);
+  },
   genEntry(id){
     let burl = `/restock/${id}/newentry`;
     return vizapi.get(burl).then( done => done ).catch( fail => fail.response);

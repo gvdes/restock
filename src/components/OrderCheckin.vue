@@ -6,7 +6,7 @@
         Pedido {{ $route.params.oid }} <span class="text--3" v-if="order">- {{ order.requisition.from.alias }}</span>
       </q-toolbar-title>
       <div v-if="order.invoice_received" class="text-primary">
-        <div>Entrada:</div>
+        <div>{{ order.requisition.from._type == 1 ? 'Traspaso' : 'Entrada'}}</div>
         <div class="text-bold">{{ order.invoice_received }}</div>
       </div>
     </q-toolbar>
@@ -83,7 +83,10 @@
             <div class="text-center col text-primary">
               <div>Solicitud</div>
               <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.units.id == 3 ?
-                `Caja${wndCounter.item.pivot.amount != 1 ? 's' : ''}` : `Pieza${wndCounter.item.pivot.amount!=1?'s':''}` }}
+                `Caja${wndCounter.item.pivot.amount != 1 ? 's' : ''}` : `Pieza${wndCounter.item.pivot.amount != 1 ? 's'
+                  :
+                ''}`
+                }}
               </div>
             </div>
 
@@ -91,8 +94,9 @@
               <div>Salida</div>
               <div class="text-bold">{{ wndCounter.item.pivot.toDelivered }} {{ wndCounter.item.units.id == 3 ?
                 (wndCounter.item.pivot.toDelivered != 1 ? "Cajas" : "Caja") : (wndCounter.item.pivot.toDelivered != 1 ?
-                "Piezas":"Pieza") }} <small>({{ (wndCounter.item.units.id == 3 ?
-                  (wndCounter.item.pivot.toDelivered * wndCounter.item.pivot.ipack) : wndCounter.item.pivot.toDelivered)}}
+                  "Piezas" : "Pieza") }} <small>({{ (wndCounter.item.units.id == 3 ?
+                  (wndCounter.item.pivot.toDelivered * wndCounter.item.pivot.ipack) :
+                  wndCounter.item.pivot.toDelivered) }}
                   pzs)</small></div>
             </div>
 
@@ -109,8 +113,9 @@
 
             <div class="text-center col">
               <div>Piezas</div>
-              <div class="text-bold">{{ wndCounter.item.units.id == 3 ? (wndCounter.form.count * wndCounter.form.ipack) :
-                wndCounter.form.count}}</div>
+              <div class="text-bold">{{ wndCounter.item.units.id == 3 ? (wndCounter.form.count * wndCounter.form.ipack)
+                :
+                wndCounter.form.count }}</div>
             </div>
 
             <!-- <div class="text-center col">
@@ -166,6 +171,7 @@ import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import RestockApi from 'src/api/RestockApi.js';
 import AssitApi from 'src/api/AssistApi.js';
+import pdf from 'src/api/pdfCreate.js';
 
 const $q = useQuasar();
 const $route = useRoute();
@@ -285,39 +291,70 @@ const setReceivedProduct = async () => {
 
 const tryGenEntry = async () => {
   $q.loading.show({ message: "Generando, espera..." });
-  // wndNextState.value.state = false;
-  // console.log(order.value.id)
-  // const response = await RestockApi.genEntry(order.value.id);
-  // console.log(response);
+  console.log(order.value.requisition.from._type)
 
-  // if(response.status==200){
-  // console.log(response.data);
 
-  // if(response.data){
-
-  let data = { id: $route.params.oid, state: 10, suply:order.value._suplier_id }
+  let data = { id: $route.params.oid, state: 10, suply: order.value._suplier_id }
   console.log(data);
   let resp = await AssitApi.nextState(data)
+
   if (resp.status == 200) {
-    if (resp.data.partitionsEnd > order.value.requisition._status) {
-      let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
-      console.log(nes)
-      const nxt = await RestockApi.nextState(nes);
-      console.log(nxt);
+
+    if (order.value.requisition.from._type != 1) {
+
+      if (resp.data.partitionsEnd > order.value.requisition._status) {
+        let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
+        console.log(nes)
+        const nxt = await RestockApi.nextState(nes);
+        console.log(nxt);
+      }
+      // $sktRestock.emit("orderpartition_refresh", { order: data.id });
+      $q.notify({
+        message: `Se genero la entrada`,
+        html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
+      });
+      reload();
+      console.log(resp)
+
+    } else {
+      console.log('es Traspaso')
+
+      const response = await RestockApi.genTransferRec($route.params.oid, order.value._suplier_id);
+      console.log(response);
+      if (response.status == 200) {
+        if (resp.data.partitionsEnd > order.value.requisition._status) {
+        let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
+        console.log(nes)
+        const nxt = await RestockApi.nextState(nes);
+        console.log(nxt);
+      }
+      // $sktRestock.emit("orderpartition_refresh", { order: data.id });
+        console.log(response)
+
+
+        if (response.data.transfer) {
+          console.log(response)
+          $q.notify({
+            message: `Se actualizo el traspaso  <b class="text-h6">${response.data.transfer.folio}</b>`,
+            html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
+          });
+          let wndQRCode = response.data.requisition.entry_key;
+          pdf.pdfTransfer(response.data.transfer.folio, wndQRCode, $route.params.oid)
+        }
+        reload();
+
+
+      } else { alert(`Error ${response.status}: ${response.data}`); }
+
     }
-    $q.notify({
-    message: `Se genero la entrada`,
-    html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
-  });
-  reload();
-    console.log(resp)
+
   } else {
     console.log(resp)
   }
 
 
-  // }else{ alert("Error 500: Ocurrio un error inesperado :("); }
-  // }else{ alert(`Error ${response.status}: ${response.data}`); }
+
+
 
   $q.loading.hide();
 }

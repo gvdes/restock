@@ -136,16 +136,27 @@
                   </q-card-section>
                   <q-separator />
 
-                  <q-card-section class="flex justify-between">
-                    <div>Salida</div>
-                    <div>Entrada</div>
+                  <q-card-section class="flex justify-between" >
+                    <div v-if="head.from._type != 1">
+                      <div>Salida</div>
+                      <div>Entrada</div>
+                    </div>
+                    <div v-else>
+                      <div>Traspaso</div>
+                    </div>
                     <div>Herramientas</div>
 
                   </q-card-section>
                   <q-separator />
-                  <q-card-section class="flex justify-between">
-                    <div>{{ props.row.invoice }}</div>
-                    <div>{{ props.row.invoice_received }}</div>
+                  <q-card-section class="flex justify-between" >
+                    <div v-if="head.from._type != 1">
+                      <div>{{ props.row.invoice }}</div>
+                      <div>{{ props.row.invoice_received }}</div>
+                    </div>
+                    <div  v-else>
+                      <div>{{ props.row.invoice }}</div>
+                    </div>
+
                     <div class="row">
                       <div class="col" v-if="props.row._status == 6"> <q-btn color="pink" label="En Camino"
                           class="q-px-xl q-py-xs" size="10px" padding="5px 2px" icon-right="start" flat
@@ -153,7 +164,7 @@
                       <div class="col" v-if="props.row._status >= 7"> <q-btn color="pink" icon="qr_code"
                           @click="genQRKey(props.row.entry_key)" flat /></div>
                       <div class="col" v-if="props.row._status >= 7"> <q-btn color="pink" icon="list"
-                          @click="genPdf.pdf(props.row.invoice, props.row.entry_key, head.id)" flat /></div>
+                          @click="createPDF(props.row)" flat /></div>
                     </div>
 
                   </q-card-section>
@@ -358,7 +369,8 @@ const init = async () => {
   // wndQRCode.value.key = response.data.entry_key;
   invoice.value = response.data.invoice;
   if (cstate.value.id == 2) {
-    let supp = await AssitApi.getSupply();
+    console.log(order.value.to.id);
+    let supp = await AssitApi.getSupply(order.value.to.id);
     console.log(supp);
     supply.value.opts = supp
   }
@@ -511,7 +523,7 @@ const printForPartition = async data => {
 const genvoice = async (row) => {
   selSupply.value = row
   wndGenInvoice.value.state = true
-  let ch = await AssitApi.getSupply();
+  let ch = await AssitApi.getSupply(order.value.to.id);
   console.log(ch);
   chof.value.opts = ch
 }
@@ -560,6 +572,17 @@ const remove = async () => {
 const partitionPrint = (row) => {
   console.log(row.id)
   part.value = row.id
+}
+
+const createPDF = (row) => {
+  console.log(order.value)
+  if(order.value.from._type != 1){
+    genPdf.pdf(row.invoice, row.entry_key, head.value.id)
+  }else{
+    console.log(row.invoice)
+    genPdf.pdfTransfer(row.invoice, row.entry_key, head.value.id)
+  }
+
 }
 
 
