@@ -16,6 +16,12 @@
           replace
           label="Automaticos"
         />
+        <q-route-tab
+          icon="list"
+          to="/texas"
+          replace
+          label="P. Texcoco"
+        />
       </q-tabs>
     </q-header>
 

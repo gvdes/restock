@@ -30,18 +30,20 @@ const routes = [
     component: () => import('layouts/Entries.vue'),
     children:[
       { path:'/compare', component: () => import('pages/Comparativo/Compare.vue') },
-      { path:'/automate', component: () => import('pages/Automatico/Automate.vue') }
+      { path:'/automate', component: () => import('pages/Automatico/Automate.vue') },
+      { path:'/texas', component: () => import('pages/Automatico/Texcoco.vue') }
+
     ]
   },
 
-  {
-    path: '/texas',
-    component: () => import('layouts/Texas/Index.vue'),
-    // children:[
-      // { path:'/compare', component: () => import('pages/Comparativo/Compare.vue') },
-      // { path:'/automate', component: () => import('pages/Automatico/Automate.vue') }
-    // ]
-  },
+  // {
+  //   path: '/texas',
+  //   component: () => import('layouts/Texas/Index.vue'),
+  //   // children:[
+  //     // { path:'/compare', component: () => import('pages/Comparativo/Compare.vue') },
+  //     // { path:'/automate', component: () => import('pages/Automatico/Automate.vue') }
+  //   // ]
+  // },
 ]
 
 export default routes
