@@ -20,7 +20,9 @@ const vizapi = axios.create({
 const assistdb = axios.create({
   // baseURL: 'http://192.168.10.160:1920/Assist/public/api/restock'
   // baseURL: 'http://mx100-cedis-mkrqpwcczk.dynamic-m.com:3539/Assist/public/api/restock'
-  baseURL: 'http://192.168.10.61:1619/Assist/public/api/restock'
+  // baseURL: 'http://192.168.10.61:1619/Assist/public/api/restock'
+  baseURL: 'http://192.168.10.238:2902/Assist/public/api/restock'
+
 });
 
 vizapi.interceptors.response.use( response => {
