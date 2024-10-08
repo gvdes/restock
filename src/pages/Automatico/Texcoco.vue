@@ -39,7 +39,7 @@
         </q-card>
       </q-dialog>
 
-      <q-dialog v-model="order.state" persistent full-width>
+      <q-dialog v-model="order.state"  full-width>
         <q-card>
           <q-table :rows="order.val.products" :columns="productTable.columns" :filter="productTable.filter">
 
