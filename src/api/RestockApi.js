@@ -81,4 +81,8 @@ export default{
     let burl = "/restock/print/Partition";
     return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
   },
+  nextStep(data){
+    let burl = "/restock/nextStep";
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
 }

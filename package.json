@@ -13,14 +13,15 @@
     "apexcharts": "^3.36.3",
     "axios": "^0.21.1",
     "dayjs": "^1.11.6",
+    "exceljs": "^4.4.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "pinia": "^2.0.11",
     "qrcode": "^1.5.1",
     "quasar": "^2.6.0",
+    "socket.io-client": "^4.3.2",
     "vue": "^3.0.0",
-    "vue-router": "^4.0.0",
-    "socket.io-client": "^4.3.2"
+    "vue-router": "^4.0.0"
   },
   "devDependencies": {
     "@quasar/app-vite": "^1.0.0",
