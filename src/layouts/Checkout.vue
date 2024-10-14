@@ -41,8 +41,12 @@
           <q-select v-model="supply.val" :options="supply.opts" label="Verificador" option-label="complete_name"
             filled />
         </q-card-section>
+        <q-card-section>
+          <q-select v-model="warehouse.val" :options="warehouse.opts" label="Almacen Destino" filled />
+        </q-card-section>
+
         <q-card-actions vertical align="center">
-          <q-btn flat label="Si" color="primary" @click="startCheckin" :disable="supply.val == null" />
+          <q-btn flat label="Si" color="primary" @click="startCheckin" :disable="supply.val == null || warehouse.val == null" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -292,6 +296,10 @@ const supplier = ref({
   val: null,
   opts: []
 })
+const warehouse = ref({
+  val:null,
+  opts:[{id:'GEN', label:'General'},{id:'EMP', label:'Empaques'}]
+})
 const partition = ref(null);
 const viewcols = ref(["code", "assocs", "ipack", "request", "uspply", "delivery", "reqinpzs", "checkout", "stocks"]);
 const productsdb = ref([]);
@@ -360,7 +368,6 @@ const basketCheck = computed(() => {
   let target = finder.value.toUpperCase().trim();
   return target.length ? counteds.value.filter(p => (p.code.match(target) || (p.barcode && p.barcode.match(target)))) : counteds.value;
 });
-
 const init = async () => {
   $q.loading.show({ message: "Cargando..." });
   console.log("Iniciando...");
@@ -558,7 +565,8 @@ const startCheckin = async () => {
   let data = {
     pedido: $route.params.oid,
     surtidor: supplier.value.val._suplier_id,
-    verified: supply.value.val.id
+    verified: supply.value.val.id,
+    warehouse: warehouse.value.val.id
   }
   console.log(data)
   let savesupply = await AssitApi.SaveVerified(data);
