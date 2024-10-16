@@ -110,7 +110,7 @@
 
                   <div class="text-center col">
                     <div>PxC</div>
-                    <q-input dense borderless v-model="wndCounter.form.ipack" type="number" input-class="text-h6 text-center" :readonly="wndCounter.item.units.id!=3" :disable="wndCounter.item.units.id!=3" />
+                    <q-input dense borderless v-model="wndCounter.form.ipack" type="number" input-class="text-h6 text-center"  />
                   </div>
 
                   <div class="text-center col">
