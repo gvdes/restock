@@ -52,7 +52,15 @@ export default{
   sendMessage(data){
     let burl = `/sendMessage`;
     return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
-  }
+  },
+  getStores(){
+    let burl = `/getStores`;
+    return assistdb.get(burl).then( done => done ).catch( fail => fail);
+  },
+  getData(data){
+    let burl = `/getData`;
+    return assistdb.post(burl,data).then( done => done ).catch( fail => fail);
+  },
 
 
 }

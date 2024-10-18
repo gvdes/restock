@@ -22,10 +22,12 @@
           <div>Piezas: <b>{{ totalpieces }}</b> </div>
         </div>
         <div class="row items-center justify-between q-pt-sm" v-if="ostate && ostate.id >= 3">
-          <div><span class="text--2">Por revisar:</span> <b>{{ uncounteds.length }}</b></div>
-          <div><span class="text--2">Revisados:</span> <b>{{ counteds.length }}</b></div>
           <div><span class="text--2">Agotados:</span> <b>{{ soldout.length }}</b></div>
           <div><span class="text--2">Con stock:</span> <b>{{ wstock.length }}</b></div>
+          <div><span class="text--2">Por revisar:</span> <b>{{ uncounteds.length }}</b></div>
+          <div><span class="text--2">Revisados:</span> <b>{{ counteds.length }}</b></div>
+          <div><span class="text--2">Cajas Contadas:</span> <b>{{ counteds.reduce((acc, val)=> acc + (val.pivot._supply_by == 3 ? val.pivot.toDelivered : 1), 0) }}</b></div>
+
         </div>
       </div>
     </q-header>

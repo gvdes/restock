@@ -17,10 +17,16 @@
           label="Automaticos"
         />
         <q-route-tab
-          icon="list"
+          icon="atm"
           to="/texas"
           replace
           label="P. Texcoco"
+        />
+        <q-route-tab
+          icon="ios_share"
+          to="/report"
+          replace
+          label="Reporte"
         />
       </q-tabs>
     </q-header>

@@ -31,8 +31,8 @@ const routes = [
     children:[
       { path:'/compare', component: () => import('pages/Comparativo/Compare.vue') },
       { path:'/automate', component: () => import('pages/Automatico/Automate.vue') },
-      { path:'/texas', component: () => import('pages/Automatico/Texcoco.vue') }
-
+      { path:'/texas', component: () => import('pages/Automatico/Texcoco.vue') },
+      { path:'/report', component: () => import('pages/Comparativo/Report.vue') },
     ]
   },
 
