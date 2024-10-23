@@ -217,7 +217,7 @@
             </q-card-section>
             <q-card-actions align="right">
               <q-btn flat label="Canclear" color="negative" rounded v-close-popup no-caps />
-              <q-btn flat label="Emitir Factura" color="positive" rounded @click="nextState" />
+              <q-btn flat label="Emitir Factura" color="positive" rounded @click="nextState" :disable="lockbutton" />
             </q-card-actions>
           </q-card>
         </q-dialog>
@@ -274,7 +274,7 @@
           </template>
         </q-input>
         <q-btn color="white" text-color="cyan-9" label="Terminar" icon="done" @click="wndNextState.state = true"
-          v-if="counteds.length > 0" no-caps />
+          v-if="counteds.length > 0" no-caps :disable="lockbutton" />
       </q-footer>
       <q-footer v-if="partition && partition._status != 5" bordered class="bg-orange-9 text-white">
         <div class="q-pa-md text-bold text-uppercase text-center">{{ partition?.status.name }}</div>
@@ -300,6 +300,15 @@ const $q = useQuasar();
 
 const user_socket = usrSkt;
 
+$sktRestock.on("blockButton", () => {
+  $q.notify({message:'Se esta generando otra salida',type:'positive'})
+  lockbutton.value = true;
+});
+
+$sktRestock.on("unblockButton", () => {
+  $q.notify({message:'Se termino de generar la otra salida',type:'negative'})
+  lockbutton.value = false;
+});
 const wndGenInvoice = ref({ state: false });
 const wndQRCode = ref({ state: false, key: null });
 const wndStartCheck = ref({ state: true })
@@ -308,6 +317,7 @@ const supplier = ref({
   val: null,
   opts: []
 })
+const lockbutton = ref(false)
 const warehouse = ref({
   val: null,
   opts: [{ id: 'GEN', label: 'General' }, { id: 'EMP', label: 'Empaques' }]
@@ -406,6 +416,7 @@ const setPartition = (a) => {
   if (a._status == 5) {
     selsupply.value = false
   }
+  $sktRestock.emit("checkouConect",  order.value );
 }
 
 const rowClicked = (a, row, b) => enabledEditor.value ? openEditor(row) : null;
@@ -464,6 +475,7 @@ const setDeliveryProduct = async () => {
 }
 
 const nextState = async () => {
+  $sktRestock.emit("blockButton", order.value);
   $q.loading.show({ message: "Terminando, espera..." });
   console.log(order.value._workpoint_from)
 
@@ -537,6 +549,7 @@ const nextState = async () => {
     }
   } else { console.log(resp) }
   $q.loading.hide();
+  $sktRestock.emit("unblockButton", order.value);
 }
 
 
