@@ -5,11 +5,8 @@
         <q-btn flat round dense icon="arrow_back" @click="$router.replace('/checkout');" />
         <q-toolbar-title>
           Pedido {{ $route.params.oid }}
-
         </q-toolbar-title>
-        {{ partition?._suplier }}
-        <q-space />
-        {{ order.notes }}
+        <div class="text-bold">Origen : </div>{{ order.to?.name }}
         <q-space />
         <q-btn color="white" icon="sync" @click="init" round dense flat />
 
@@ -17,6 +14,16 @@
       </q-toolbar>
       <q-separator />
       <div class="q-px-md q-py-sm">
+        <div class="col row justify-between ">
+          <div class="text-bold">Surtidor :</div> {{ partition?._suplier }}
+          <q-space />
+          <div class="text-bold">Notas :</div> {{ order.notes }}
+          <q-space />
+          <div class="text-bold">Destino :</div> {{ order.from?.name }}
+          <q-space />
+          <div class="text-bold">Particion :</div> {{ supplier.val?.id }}
+        </div>
+        <q-separator spaced inset vertical dark />
         <div class="col row justify-between ">
           <div>Productos: <b>{{ productsdb.length }}</b></div>
           <div>Piezas: <b>{{ totalpieces }}</b> </div>
@@ -26,7 +33,8 @@
           <div><span class="text--2">Con stock:</span> <b>{{ wstock.length }}</b></div>
           <div><span class="text--2">Por revisar:</span> <b>{{ uncounteds.length }}</b></div>
           <div><span class="text--2">Revisados:</span> <b>{{ counteds.length }}</b></div>
-          <div><span class="text--2">Cajas Contadas:</span> <b>{{ counteds.reduce((acc, val)=> acc + (val.pivot._supply_by == 3 ? val.pivot.toDelivered : 1), 0) }}</b></div>
+          <div><span class="text--2">Cajas Contadas:</span> <b>{{ counteds.reduce((acc, val) => acc +
+            (val.pivot._supply_by == 3 ? val.pivot.toDelivered : 1), 0) }}</b></div>
 
         </div>
       </div>
@@ -44,11 +52,13 @@
             filled />
         </q-card-section>
         <q-card-section>
-          <q-select v-model="warehouse.val" :options="warehouse.opts" label="Almacen Destino" filled />
+          <q-select v-model="warehouse.val" :options="warehouse.opts" label="Almacen Destino" filled
+            v-if="order.from._type != 1" />
         </q-card-section>
 
         <q-card-actions vertical align="center">
-          <q-btn flat label="Si" color="primary" @click="startCheckin" :disable="supply.val == null || warehouse.val == null" />
+          <q-btn flat label="Si" color="primary" @click="startCheckin"
+            :disable="supply.val == null || (order.from._type != 1 && warehouse.val == null)" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -299,8 +309,8 @@ const supplier = ref({
   opts: []
 })
 const warehouse = ref({
-  val:null,
-  opts:[{id:'GEN', label:'General'},{id:'EMP', label:'Empaques'}]
+  val: null,
+  opts: [{ id: 'GEN', label: 'General' }, { id: 'EMP', label: 'Empaques' }]
 })
 const partition = ref(null);
 const viewcols = ref(["code", "assocs", "ipack", "request", "uspply", "delivery", "reqinpzs", "checkout", "stocks"]);
@@ -502,7 +512,7 @@ const nextState = async () => {
         }
       } else { alert(`Error ${response.status}: ${response.data}`); }
       console.log(resp)
-    } else{ // SE GENERA EL TRASPASO SI ES DE CEDIS A CEDIS
+    } else { // SE GENERA EL TRASPASO SI ES DE CEDIS A CEDIS
       const response = await RestockApi.genTransfer($route.params.oid, partition.value._suplier_id);
       console.log(response);
       if (resp.data.partitionsEnd > order.value._status) {
@@ -525,7 +535,7 @@ const nextState = async () => {
       } else { alert(`Error ${response.status}: ${response.data}`); }
       console.log(resp)
     }
-  }else { console.log(resp) }
+  } else { console.log(resp) }
   $q.loading.hide();
 }
 
@@ -568,7 +578,7 @@ const startCheckin = async () => {
     pedido: $route.params.oid,
     surtidor: supplier.value.val._suplier_id,
     verified: supply.value.val.id,
-    warehouse: warehouse.value.val.id
+    warehouse: warehouse.value.val ? warehouse.value.val.id : 'GEN'
   }
   console.log(data)
   let savesupply = await AssitApi.SaveVerified(data);

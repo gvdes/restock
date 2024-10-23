@@ -47,8 +47,10 @@
               <q-item >
                 <q-item-section>ID</q-item-section>
                 <q-item-section>ESTADO</q-item-section>
-                <q-item-section> SALIDA</q-item-section>
-                <q-item-section>ENTRADA</q-item-section>
+                <q-item-section v-if="props.row.from._type == 2 "> SALIDA</q-item-section>
+                <q-item-section v-if="props.row.from._type == 2 ">ENTRADA</q-item-section>
+                <q-item-section v-if="props.row.from._type == 1 ">TRASPASO</q-item-section>
+
               </q-item>
               <div v-for="(partition, index) in props.row.partition" :key="index">
                 <q-item>
@@ -62,8 +64,9 @@
                   </q-item-section>
 
                   <q-item-section :class="`${colorCellState[partition.status.id-1]}`"> {{ partition.status.name }}</q-item-section>
-                  <q-item-section> {{ partition.invoice }}</q-item-section>
-                  <q-item-section> {{ partition.invoice_received }}</q-item-section>
+                  <q-item-section v-if="props.row.from._type == 2 "> {{ partition.invoice }}</q-item-section>
+                  <q-item-section v-if="props.row.from._type == 2 "> {{ partition.invoice_received }}</q-item-section>
+                  <q-item-section v-if="props.row.from._type == 1 "> {{ partition.invoice }}</q-item-section>
                 </q-item>
                 <q-separator spaced inset />
               </div>

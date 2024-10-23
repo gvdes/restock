@@ -33,6 +33,7 @@ const routes = [
       { path:'/automate', component: () => import('pages/Automatico/Automate.vue') },
       { path:'/texas', component: () => import('pages/Automatico/Texcoco.vue') },
       { path:'/report', component: () => import('pages/Comparativo/Report.vue') },
+      { path:'/stocks', component: () => import('pages/Stocks/Stocks.vue') },
     ]
   },
 

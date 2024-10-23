@@ -3,17 +3,20 @@
     <q-header bordered class="bg-yellow text-dark">
       <q-toolbar class="row justify-between items-center">
         <div class="text-bold">Dashboard </div>
+        <div class="text-bold">Cedis {{ dashvalue == 'SAP' ? 'SAN PABLO' : dashvalue == 'TEX' ? 'TEXCOCO' : dashvalue == 'BOL' ? 'BOLIVIA' : dashvalue == 'BRA' ? 'BRASIL' : 'TODOS ? ' }}</div>
         <div class="row">
           <q-btn color="dark" round unelevated flat icon="sync" @click="init" />
 
           <div class="col row">
+            <q-select v-model="dashvalue" :options="dashboards" label="Almacen" filled dense @update:model-value="updateDash" />
+            <q-separator spaced inset vertical dark />
             <q-select class="col"
               dense filled label="Vista"
               v-model="viewdate"
               :options="optranges"
               @update:model-value="reloadView"
             />
-            <q-btn unelevated color="pink-5" icon="fas fa-calendar-day" dense v-if="viewdate.id=='C'" />
+            <q-btn unelevated color="pink-5" icon="fa-calendar-day" dense v-if="viewdate.id=='C'" />
           </div>
         </div>
       </q-toolbar>
@@ -55,7 +58,10 @@
     { id:'C', label:'otra ...', disable:true},
   ]);
 
-  const dashboards = ["p2","P2","p3","P3","bol","BOL","sap","SAP","TEX"];
+
+
+  const dashboards = ["BOL","SAP","TEX","BRA"];
+  const dashvalue = ref($route.query.d ?? "SAP")
 
   const viewstore = ref(null);
   const viewdate = ref(null);
@@ -70,13 +76,14 @@
     console.log("%cIniciando MainLayout...","font-size:2em;color:orange;");
 
     let v = $route.query.v ?? "day"; // define el valor de la vista
+    console.log(v)
     let r = optranges.value.findIndex( o => o.id==v ); // busca que sea un valor valido (day||week||month)
     let idx = (r>=0) ? r:0; // obtiene el indice correspondiente al valor hayado, de lo contrario devuelve 0 (day)
 
     viewdate.value = optranges.value[idx]; // setea el valor del select de la vista
     dateranges.value.from = dayjs(Date.now()).startOf(viewdate.value.id); // setea el valor de inicio de la vista
 
-    let dash = $route.query.d ? (dashboards.includes($route.query.d) ? $route.query.d : "all") : "all";
+    let dash = $route.query.d ? (dashboards.includes($route.query.d) ? $route.query.d : "SAP") : "SAP";
     console.log(dash);
 
     const req = await RestockApi.index(viewdate.value.id,dash);
@@ -116,6 +123,12 @@
       `%c${skt.user.me.nick} de ${skt.from.alias} se ha unido a Restock (UID: ${skt.user.me.id})`,
       "background:#076F3E;color:#f5f6fa;border-radius:10px;padding:10px;font-size:1.1em;"
     );
+  }
+
+  const updateDash = () => {
+    console.log(dashvalue.value)
+    let v = $route.query.v ?? "day";
+    $router.push(`/dashboard?v=${v}&d=${dashvalue.value}`);
   }
 
   const sktOrderCreate = async skt => {

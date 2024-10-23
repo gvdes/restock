@@ -28,6 +28,12 @@
           replace
           label="Reporte"
         />
+        <q-route-tab
+          icon="inventory_2"
+          to="/stocks"
+          replace
+          label="Stocks"
+        />
       </q-tabs>
     </q-header>
 
