@@ -233,7 +233,7 @@
     <q-card style="width: 400px;">
       <q-card-section class="row items-center">
         <q-select v-model="supply.val" :options="supply.filter" label="SELECCIONA SURTIDOR" option-label="complete_name"
-          filled multiple counter max-values="5" hint="Maximo 5 colaboradores" style="width: 100%" @filter="filterFn"
+          filled multiple counter max-values="10" hint="Maximo 10 colaboradores" style="width: 100%" @filter="filterFn"
           input-debounce="0" use-input use-chips />
       </q-card-section>
       <q-card-actions align="right">
