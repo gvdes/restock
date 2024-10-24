@@ -401,7 +401,9 @@ const startSupply = async () => {
     let dat = {
       supplyer: supply.value.val,
       pedido: head.value.id,
-      status: newState
+      status: newState,
+      _workpoint_to : head.to.id,
+      _workpoint_from: head.from.id,
     }
     let savesupply = await AssitApi.SaveSupply(dat);
     console.log(savesupply)
@@ -507,7 +509,7 @@ const printForPartition = async data => {
   $q.loading.show({ message: "..." });
   console.log(data.ip);
   console.log(part.value)
-  const resp = await RestockApi.printForPartition({ ip: data.ip, port: data._port, _partition: part.value });
+  const resp = await RestockApi.printForPartition({ ip: data.ip, port: data._port, _partition: part.value, _workpoint_to:head.value._workpoint_to });
   console.log(resp);
   if (resp.status == 200) {
     let responding = resp.data;

@@ -302,6 +302,7 @@ const user_socket = usrSkt;
 
 $sktRestock.on("blockButton", () => {
   $q.notify({message:'Se esta generando otra salida',type:'positive'})
+  wndNextState.value.state = false
   lockbutton.value = true;
 });
 
