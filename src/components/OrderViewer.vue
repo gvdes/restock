@@ -402,8 +402,8 @@ const startSupply = async () => {
       supplyer: supply.value.val,
       pedido: head.value.id,
       status: newState,
-      _workpoint_to : head.to.id,
-      _workpoint_from: head.from.id,
+      _workpoint_to : head.value.to.id,
+      _workpoint_from: head.value.from.id,
     }
     let savesupply = await AssitApi.SaveSupply(dat);
     console.log(savesupply)
