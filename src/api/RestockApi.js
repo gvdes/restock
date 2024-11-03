@@ -1,9 +1,9 @@
 import { vizapi } from "src/boot/axios";
 
 export default{
-  index(view,dash="all"){
-    let burl = `/restock?v=${view}&d=${dash}`;
-    return vizapi.get(burl).then( done => done.data ).catch( fail => fail);
+  index(data){
+    let burl = `/restock`;
+    return vizapi.post(burl,data).then( done => done.data ).catch( fail => fail);
   },
   order(id){
     let burl = `/restock/${id}`;

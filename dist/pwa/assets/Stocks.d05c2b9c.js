@@ -1,1 +1,0 @@
-import{Q as a}from"./QPage.82e7df4a.js";import{aQ as e,o as t,b as o,w as r,aE as c}from"./index.80432747.js";const s={};function n(_,f){return t(),o(a,{padding:""},{default:r(()=>[c(" holi ")]),_:1})}var p=e(s,[["render",n]]);export{p as default};

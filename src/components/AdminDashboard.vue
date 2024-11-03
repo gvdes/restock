@@ -145,6 +145,9 @@ const colorCellState = [
   'text-positive'
 ];
 
+const props = defineProps({
+  dash: { type: Object, default: {} },
+})
 const $emit = defineEmits(["reloadDashboard", "freshOrder"]);
 const table = ref({
   columns: [
@@ -187,7 +190,7 @@ const orderViewer = ref({
 });
 
 const ordersSize = computed(() => $restockStore.ordersSize);
-const ordersok = computed(() => $restockStore.ordersok.filter(e=> e._status != 100));
+const ordersok = computed(() => $restockStore.ordersok.filter(e=> props.dash.id == 0 ?  e._status != 100  :   e._status != 100 && e.to.id == props.dash.id));
 const orderrem = computed(() => $restockStore.ordersok.filter(e=> e._status == 100));
 const orderserrors = computed(() => $restockStore.orderserrors);
 const stats = computed(() => $restockStore.resume);
