@@ -34,6 +34,10 @@
   const $restockStore = useRestockStore();
   const colorCellState = ['text-grey-5 text-bold','text-bold text-h6 text-red','text-indigo', 'text-orange-8 text-bold', 'text-positive text-bold','6','7','8','9','9'];
 
+  const props = defineProps({
+  dash: { type: Object, default: {} },
+  })
+
   const table = ref({
     columns:[
       { name:'id', label:'Folio', field:'id', align:"center" },
@@ -63,7 +67,7 @@
   const open = (q,row,c) => $router.push(`/checkout/${row.id}`);
 
   // const ordersSize = computed(() => $restockStore.ordersSize);
-  const ordersdb = computed(() => $restockStore.ordersdb.filter(o => o._status>2));
+  const ordersdb = computed(() => $restockStore.ordersdb.filter(o => props.dash.id == 0 ?  o._status > 2 :   o._status > 2 && o.to.id == props.dash.id));
 
   const setOrderViewer = async (evt, row, idx) => {
     orderViewer.value.head=row;
