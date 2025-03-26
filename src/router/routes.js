@@ -1,10 +1,24 @@
 
 const routes = [
   {
+    path: '/barcode',
+    children:[
+      { path:'', component: () => import('layouts/CBcompare.vue'),name:'Revision CB' },
+      { path:':id', component: () => import('layouts/checkCB.vue') },
+
+    ]
+  },
+  {
     path: '/supply',
     children:[
-      { path:'', component: () => import('layouts/SupplyLyt.vue') },
+      { path:'', component: () => import('layouts/SupplyLyt.vue'),name:'Surtido' },
       { path:':oid', component: () => import('layouts/Supply.vue') }
+    ]
+  },
+  {
+    path: '/',
+    children:[
+      { path:'', component: () => import('layouts/Launcher.vue') },
     ]
   },
   {
@@ -23,11 +37,12 @@ const routes = [
   },
   {
     path: '/dashboard',
-    component: () => import('layouts/DashboardLyt.vue'),
+    component: () => import('layouts/DashboardLyt.vue'),name:'dashboard',
   },
   {
     path: '/entries',
     component: () => import('layouts/Entries.vue'),
+    name:'Reporte',
     children:[
       { path:'/compare', component: () => import('pages/Comparativo/Compare.vue') },
       { path:'/automate', component: () => import('pages/Automatico/Automate.vue') },
