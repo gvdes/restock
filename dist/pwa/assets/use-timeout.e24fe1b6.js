@@ -1,0 +1,1 @@
+import{ad as a,s as i,aq as m,z as n}from"./index.f1a056e5.js";function c(){let e;const o=n();function t(){clearTimeout(e)}return a(t),i(t),{removeTimeout:t,registerTimeout(r,s){clearTimeout(e),m(o)===!1&&(e=setTimeout(r,s))}}}export{c as u};
