@@ -8,20 +8,20 @@ import axios from 'axios'
 // "export default () => {}" function below (which runs individually
 // for each client)
 const vizapi = axios.create({
-  // baseURL: 'http://192.168.10.189/vizapi/public/L'
+  baseURL: 'http://192.168.10.189/vizapi/public/L'
   // baseURL: 'http://192.168.10.189/vizapi/public/L'
   // baseURL: 'http://localhost:3220/vizapi/public/L'
-  baseURL: 'http://192.168.10.160:1619/vizapi/public/L'
+  // baseURL: 'http://192.168.10.160:1619/vizapi/public/L'
   // baseURL: 'http://localhost:3220/vizapi/public/L'
   // baseURL: 'http://192.168.10.238:1619/vizapi/public/L'
   // baseURL: 'http://192.168.1.68:80/arceus/public/api'
 });
 
 const assistdb = axios.create({
-  baseURL: 'http://192.168.10.160:1920/Assist/public/api/restock'
+  // baseURL: 'http://192.168.10.160:1920/Assist/public/api/restock'
   // baseURL: 'http://mx100-cedis-mkrqpwcczk.dynamic-m.com:3539/Assist/public/api/restock'
   // baseURL: 'http://192.168.10.61:1619/Assist/public/api/restock'
-  // baseURL: 'http://192.168.10.238:2902/Assist/public/api/restock'
+  baseURL: 'http://192.168.10.238:2902/Assist/public/api/restock'
 
 });
 
