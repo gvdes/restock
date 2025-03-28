@@ -85,4 +85,12 @@ export default{
     let burl = "/restock/nextStep";
     return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
   },
+  getDifferences(data){
+    let burl = "/restock/getDifferences";
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
+  correction(data){
+    let burl = "/restock/correction";
+    return vizapi.post(burl,data).then( done => done ).catch( fail => fail.response);
+  },
 }

@@ -6,7 +6,7 @@
         Pedido {{ $route.params.oid }} <span class="text--3" v-if="order">- {{ order.requisition.from.alias }}</span>
       </q-toolbar-title>
       <div v-if="order.invoice_received" class="text-primary">
-        <div>{{ order.requisition.from._type == 1 ? 'Traspaso' : 'Entrada'}}</div>
+        <div>{{ order.requisition.from._type == 1 ? 'Traspaso' : 'Entrada' }}</div>
         <div class="text-bold">{{ order.invoice_received }}</div>
       </div>
     </q-toolbar>
@@ -85,8 +85,8 @@
               <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.units.id == 3 ?
                 `Caja${wndCounter.item.pivot.amount != 1 ? 's' : ''}` : `Pieza${wndCounter.item.pivot.amount != 1 ? 's'
                   :
-                ''}`
-                }}
+                  ''}`
+              }}
               </div>
             </div>
 
@@ -302,6 +302,21 @@ const tryGenEntry = async () => {
 
     if (order.value.requisition.from._type != 1) {
 
+      const entry = await RestockApi.genEntry(order.value.id);
+      console.log(entry);
+
+      if (entry.status == 200) {
+        console.log(entry.data);
+
+        if (entry.data) {
+          $q.notify({
+            message: `Se genero la Entrada <b class="text-h6">${entry.data.invoice.folio}</b>`,
+            html: true, position: "center", icon: "done", timeout: 5000, color: "orange"
+          });
+
+        } else { alert("Error 500: Ocurrio un error inesperado :("); }
+      } else { alert(`Error ${entry.status}: ${entry.data}`); console.log(entry.data) }
+
       if (resp.data.partitionsEnd > order.value.requisition._status) {
         let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
         console.log(nes)
@@ -323,12 +338,12 @@ const tryGenEntry = async () => {
       console.log(response);
       if (response.status == 200) {
         if (resp.data.partitionsEnd > order.value.requisition._status) {
-        let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
-        console.log(nes)
-        const nxt = await RestockApi.nextState(nes);
-        console.log(nxt);
-      }
-      // $sktRestock.emit("orderpartition_refresh", { order: data.id });
+          let nes = { id: $route.params.oid, state: resp.data.partitionsEnd };
+          console.log(nes)
+          const nxt = await RestockApi.nextState(nes);
+          console.log(nxt);
+        }
+        // $sktRestock.emit("orderpartition_refresh", { order: data.id });
         console.log(response)
 
 
@@ -351,11 +366,6 @@ const tryGenEntry = async () => {
   } else {
     console.log(resp)
   }
-
-
-
-
-
   $q.loading.hide();
 }
 

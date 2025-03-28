@@ -32,7 +32,7 @@
           icon="inventory_2"
           to="/stocks"
           replace
-          label="Stocks"
+          label="Modificaciones"
         />
       </q-tabs>
     </q-header>

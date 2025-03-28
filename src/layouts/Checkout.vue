@@ -502,26 +502,26 @@ const nextState = async () => {
         if (response.data.invoice) {
           $q.notify({
             message: `Se genero la salida <b class="text-h6">${response.data.invoice.folio}</b>`,
-            html: true, position: "center", icon: "done", timeout: 5000, color: "positive"
+            html: true, position: "center", icon: "done", timeout: 2000, color: "positive"
           });
           wndQRCode.value.key = response.data.requisition.entry_key;
           pdf.pdf(response.data.invoice.folio, wndQRCode.value.key, $route.params.oid)
 
           console.log(partition.value.id)
-          const entry = await RestockApi.genEntry(partition.value.id);
-          console.log(entry);
+          // const entry = await RestockApi.genEntry(partition.value.id);
+          // console.log(entry);
 
-          if (entry.status == 200) {
-            console.log(entry.data);
+          // if (entry.status == 200) {
+          //   console.log(entry.data);
 
-            if (entry.data) {
-              $q.notify({
-                message: `Se genero la Entrada <b class="text-h6">${entry.data.invoice.folio}</b>`,
-                html: true, position: "center", icon: "done", timeout: 5000, color: "orange"
-              });
+          //   if (entry.data) {
+          //     $q.notify({
+          //       message: `Se genero la Entrada <b class="text-h6">${entry.data.invoice.folio}</b>`,
+          //       html: true, position: "center", icon: "done", timeout: 5000, color: "orange"
+          //     });
 
-            } else { alert("Error 500: Ocurrio un error inesperado :("); }
-          } else { alert(`Error ${response.status}: ${response.data}`); console.log(response.data) }
+          //   } else { alert("Error 500: Ocurrio un error inesperado :("); }
+          // } else { alert(`Error ${response.status}: ${response.data}`); console.log(response.data) }
         }
       } else { alert(`Error ${response.status}: ${response.data}`); }
       console.log(resp)
