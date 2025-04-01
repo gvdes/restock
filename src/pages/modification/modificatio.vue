@@ -326,7 +326,7 @@ const sendSave = async () => {
     $q.notify({message: `Se realizaron las modificaciones`,
     html: true, position: "center", icon: "done", timeout: 5000, color: "positive"})
     $q.loading.hide()
-    // window.location.reload();
+    window.location.reload();
   }
 
 }
