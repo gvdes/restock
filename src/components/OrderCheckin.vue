@@ -82,19 +82,20 @@
           <div class="row items-start justify-between">
             <div class="text-center col text-primary">
               <div>Solicitud</div>
-              <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.units.id == 3 ?
-                `Caja${wndCounter.item.pivot.amount != 1 ? 's' : ''}` : `Pieza${wndCounter.item.pivot.amount != 1 ? 's'
-                  :
-                  ''}`
-              }}
+              <div class="text-bold">{{ wndCounter.item.pivot.amount }} {{ wndCounter.item.pivot._supply_by == 3 ?
+                      `Caja${wndCounter.item.pivot.amount != 1 ? 's' : ''}` : wndCounter.item.pivot._supply_by == 2 ?
+                        `Docena${wndCounter.item.pivot.amount != 1 ? 's' : ''}` :
+                        `Pieza${wndCounter.item.pivot.amount != 1 ? 's' : ''}` }}
               </div>
             </div>
 
             <div class="text-center col text-orange-10">
               <div>Salida</div>
-              <div class="text-bold">{{ wndCounter.item.pivot.toDelivered }} {{ wndCounter.item.units.id == 3 ?
-                (wndCounter.item.pivot.toDelivered != 1 ? "Cajas" : "Caja") : (wndCounter.item.pivot.toDelivered != 1 ?
-                  "Piezas" : "Pieza") }} <small>({{ (wndCounter.item.units.id == 3 ?
+              {{ wndCounter.item.pivot.toDelivered }}
+              <div class="text-bold">{{ wndCounter.item.pivot.toDelivered }} {{ wndCounter.item.pivot._supply_by == 3 ?
+                      `Caja${wndCounter.item.pivot.amount != 1 ? 's' : ''}` : wndCounter.item.pivot._supply_by == 2 ?
+                        `Docena${wndCounter.item.pivot.amount != 1 ? 's' : ''}` :
+                        `Pieza${wndCounter.item.pivot.amount != 1 ? 's' : ''}` }} <small>({{ (wndCounter.item.pivot._supply_by == 3 ?
                   (wndCounter.item.pivot.toDelivered * wndCounter.item.pivot.ipack) :
                   wndCounter.item.pivot.toDelivered) }}
                   pzs)</small></div>
@@ -113,9 +114,9 @@
 
             <div class="text-center col">
               <div>Piezas</div>
-              <div class="text-bold">{{ wndCounter.item.units.id == 3 ? (wndCounter.form.count * wndCounter.form.ipack)
-                :
-                wndCounter.form.count }}</div>
+              <div class="text-bold">{{ wndCounter.item.pivot._supply_by == 3 ?
+                (wndCounter.form.count * wndCounter.form.ipack) : wndCounter.item.pivot._supply_by == 2 ?
+                  (wndCounter.form.count * 12) : wndCounter.form.count }}</div>
             </div>
 
             <!-- <div class="text-center col">
@@ -193,7 +194,7 @@ const table = ref({
     // { name:'locs', label:'Ubicacion', field: row => row.locations.length ? row.locations.map( l => l.path ).join(", ") :'--', align:"left", coldesc:"Ubicaciones en almacen general" },
     { name: 'ipack', label: 'PxC', field: row => typeof row.pivot.ipack == "number" ? row.pivot.ipack : row.pieces, align: "center", coldesc: "Unidades x Embalaje" },
     { name: 'request', label: 'Solicitud', field: row => row.pivot.amount, align: "center", coldesc: "Embalaje solicitado" },
-    { name: 'uspply', label: 'Unidad', field: row => row.units.id == 3 ? 'Cajas' : 'Piezas', align: 'left', coldesc: "Unidad de embalaje del producto" },
+    { name: 'uspply', label: 'Unidad', field: row => row.pivot._supply_by == 3 ? 'Cajas' : row.pivot._supply_by == 2 ? 'Docenas' : 'Piezas', align: 'left', coldesc: "Unidad de embalaje del producto" },
     { name: 'delivery', label: 'Salida', field: row => row.pivot.toDelivered, align: 'center', coldesc: "Embalaje surtido", sortable: true },
     {
       name: 'reqinpzs',
