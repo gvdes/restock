@@ -471,8 +471,8 @@ const tryGenInvoice = async () => {
 }
 
 const genQRKey = async (data) => {
-  let url = `http://192.168.10.189:2200/#/checkin/${head.value.id}?key=${data}`;
-  // let url = `http://192.168.10.112:9000/#/checkin/${head.value.id}?key=${data}`;
+  // let url = `http://192.168.10.189:2200/#/checkin/${head.value.id}?key=${data}`;
+  let url = `http://192.168.10.207:1308/#/checkin/${head.value.id}?key=${data}`;
 
   wndQRCode.value.state = true;
   nextTick(() => QRCode.toCanvas(document.getElementById('qrcode'), url));
